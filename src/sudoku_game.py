@@ -92,6 +92,13 @@ class SudokuGame:
         self.mouse_pos = (0, 0)  # Track mouse position for hover effects
         self.game_state = 'menu'  # 'menu' or 'playing'
         
+        # Enhanced Scoring System
+        self.combo_count = 0  # Current combo streak
+        self.combo_multiplier = 1.0  # Current multiplier
+        self.floating_points = []  # List of (x, y, points, color, timer) tuples
+        self.cell_flash_effects = []  # List of (row, col, color, timer) tuples
+        self.last_action_triggered_combo = False  # Track if last action maintained combo
+        
         # Animation state
         self.animation_queue = []
         self.current_animation_frame = 0
@@ -241,6 +248,13 @@ class SudokuGame:
         """Start a new game"""
         self.game_over = False
         self.show_win_message = False
+        
+        # Reset combo system
+        self.combo_count = 0
+        self.combo_multiplier = 1.0
+        self.floating_points = []
+        self.cell_flash_effects = []
+        self.last_action_triggered_combo = False
         self.show_lose_message = False
         self.show_settings = False  # FIX: Close settings modal when starting new game
         self.game_state = 'playing'  # Set to playing state
@@ -287,26 +301,72 @@ class SudokuGame:
         self.show_message("New game started! Good luck!", self.DARK_BLUE)
     
     def auto_fill_singles(self, source_cell=None, award_points=True):
-        """Auto-fill cells that have only one possible value"""
+        """Auto-fill cells that have only one possible value with combo system"""
         filled_sequence = game_logic.find_auto_fill_cells(
             self.board, self.initial_board, self.grid_size, 
             self.box_size, self.symbols, source_cell
         )
         
-        # Award partial points for auto-filled cells (unless from hint)
         filled_count = len(filled_sequence)
+        
+        # Award points with combo multiplier for auto-filled cells
         if filled_count > 0 and award_points:
-            points_per_cell = self.difficulty_settings[self.difficulty]['points_per_cell']
-            auto_points = (points_per_cell // 2) * filled_count
-            self.score += auto_points
+            base_points = self.difficulty_settings[self.difficulty]['points_per_cell']
+            total_points = 0
             
-            if filled_count == 1:
-                self.show_message(f"+{auto_points} pts (1 auto-filled)", self.DARK_BLUE)
+            # Process each auto-filled cell with escalating combo
+            for idx, (row, col, value) in enumerate(filled_sequence):
+                # Update combo multiplier
+                self.update_combo(increment=True)
+                
+                # Calculate points for this cell with current multiplier
+                cell_points = int((base_points // 2) * self.combo_multiplier)
+                total_points += cell_points
+                
+                # Add floating point effect at cell position
+                cell_size = self.BOARD_SIZE // self.grid_size
+                x = self.BOARD_X + col * cell_size + cell_size // 2
+                y = self.BOARD_Y + row * cell_size + cell_size // 2
+                
+                # Color based on combo level
+                combo_idx = min(self.combo_count, COMBO_MAX_LEVEL)
+                point_color = COMBO_COLORS[combo_idx]
+                
+                self.add_floating_points(x, y, cell_points, point_color)
+                
+                # Add cell flash effect
+                self.add_cell_flash(row, col, 'combo' if self.combo_count > 0 else 'auto_fill')
+            
+            # Award total points
+            self.score += total_points
+            
+            # Check for completion bonuses
+            bonus_points = self.check_completion_bonuses()
+            if bonus_points > 0:
+                self.score += bonus_points
+                # Add floating text at top center for bonus
+                self.add_floating_points(
+                    self.WINDOW_WIDTH // 2, 
+                    150, 
+                    bonus_points, 
+                    (255, 215, 0)  # Gold for bonuses
+                )
+            
+            # Show combo message
+            if self.combo_count > 0:
+                combo_text = f"+{total_points} pts ({filled_count} auto-filled) {self.combo_multiplier:.1f}x COMBO!"
+                self.show_message(combo_text, COMBO_COLORS[min(self.combo_count, COMBO_MAX_LEVEL)])
             else:
-                self.show_message(f"+{auto_points} pts ({filled_count} auto-filled)", self.DARK_BLUE)
+                self.show_message(f"+{total_points} pts ({filled_count} auto-filled)", self.DARK_BLUE)
             
             # Start animation
             self.start_animation(filled_sequence, source_cell)
+            self.last_action_triggered_combo = True
+        else:
+            # No auto-fill means combo breaks
+            if award_points:  # Only break combo for user actions
+                self.reset_combo()
+                self.last_action_triggered_combo = False
         
         return filled_count
     
@@ -351,6 +411,106 @@ class SudokuGame:
                 self.laser_source = None
                 if game_logic.is_puzzle_complete(self.board, self.solution, self.grid_size):
                     self.win_game()
+    
+    def update_combo(self, increment=True):
+        """Update combo counter and multiplier"""
+        if increment:
+            self.combo_count = min(self.combo_count + 1, COMBO_MAX_LEVEL)
+            self.combo_multiplier = COMBO_MULTIPLIERS[self.combo_count]
+        else:
+            self.combo_count = 0
+            self.combo_multiplier = COMBO_MULTIPLIERS[0]
+    
+    def reset_combo(self):
+        """Reset combo to zero"""
+        self.update_combo(increment=False)
+    
+    def add_floating_points(self, x, y, points, color):
+        """Add a floating point animation"""
+        self.floating_points.append({
+            'x': x,
+            'y': y,
+            'points': points,
+            'color': color,
+            'timer': FLOATING_TEXT_DURATION
+        })
+    
+    def add_cell_flash(self, row, col, flash_type='correct'):
+        """Add a cell flash effect"""
+        color = FLASH_COLORS.get(flash_type, FLASH_COLORS['correct'])
+        self.cell_flash_effects.append({
+            'row': row,
+            'col': col,
+            'color': color,
+            'timer': FLASH_DURATION
+        })
+    
+    def update_floating_points(self):
+        """Update floating point animations"""
+        for point_data in self.floating_points[:]:
+            point_data['y'] -= FLOATING_TEXT_SPEED
+            point_data['timer'] -= 1
+            
+            if point_data['timer'] <= 0:
+                self.floating_points.remove(point_data)
+    
+    def update_cell_flashes(self):
+        """Update cell flash effects"""
+        for flash_data in self.cell_flash_effects[:]:
+            flash_data['timer'] -= 1
+            
+            if flash_data['timer'] <= 0:
+                self.cell_flash_effects.remove(flash_data)
+    
+    def check_completion_bonuses(self):
+        """Check for and return completion bonuses"""
+        bonus = 0
+        
+        # Check for completed rows
+        for i in range(self.grid_size):
+            if all(self.board[i][j] == self.solution[i][j] for j in range(self.grid_size)):
+                # Check if this row was just completed (has at least one newly placed cell)
+                row_is_new = True  # Simplified - could track which rows are already complete
+                if row_is_new:
+                    bonus += BONUS_ROW_COMPLETE
+        
+        # Check for completed columns
+        for j in range(self.grid_size):
+            if all(self.board[i][j] == self.solution[i][j] for i in range(self.grid_size)):
+                col_is_new = True
+                if col_is_new:
+                    bonus += BONUS_COL_COMPLETE
+        
+        # Check for completed boxes
+        for box_row in range(0, self.grid_size, self.box_size):
+            for box_col in range(0, self.grid_size, self.box_size):
+                box_complete = True
+                for i in range(box_row, box_row + self.box_size):
+                    for j in range(box_col, box_col + self.box_size):
+                        if self.board[i][j] != self.solution[i][j]:
+                            box_complete = False
+                            break
+                    if not box_complete:
+                        break
+                
+                if box_complete:
+                    bonus += BONUS_BOX_COMPLETE
+        
+        # Check for completed numbers (all instances of a symbol placed)
+        for symbol in self.symbols:
+            symbol_complete = True
+            for i in range(self.grid_size):
+                for j in range(self.grid_size):
+                    if self.solution[i][j] == symbol and self.board[i][j] != symbol:
+                        symbol_complete = False
+                        break
+                if not symbol_complete:
+                    break
+            
+            if symbol_complete:
+                bonus += BONUS_NUMBER_COMPLETE
+        
+        return bonus
     
     def get_cell_from_pos(self, pos):
         """Get cell coordinates from mouse position"""
@@ -413,15 +573,27 @@ class SudokuGame:
             points = self.difficulty_settings[self.difficulty]['points_per_cell']
             self.score += points
             
+            # Add visual feedback
+            self.add_floating_points(
+                self.BOARD_X + col * (self.BOARD_SIZE // self.grid_size) + (self.BOARD_SIZE // self.grid_size) // 2,
+                self.BOARD_Y + row * (self.BOARD_SIZE // self.grid_size) + (self.BOARD_SIZE // self.grid_size) // 2,
+                points,
+                FLASH_COLORS['correct']
+            )
+            self.add_cell_flash(row, col, 'correct')
+            
             auto_filled = self.auto_fill_singles(source_cell=(row, col))
             
             if auto_filled == 0:
+                # No auto-fill, so show simple message and reset combo
                 self.show_message(f"Correct! +{points} points", self.DARK_GREEN)
+                self.reset_combo()
             
             if game_logic.is_puzzle_complete(self.board, self.solution, self.grid_size):
                 self.win_game()
         else:
             self.lives -= 1
+            self.reset_combo()  # Wrong move resets combo
             self.show_message("Wrong! -1 life", self.DARK_RED)
             
             if self.lives <= 0:
@@ -459,15 +631,27 @@ class SudokuGame:
                     points = self.difficulty_settings[self.difficulty]['points_per_cell']
                     self.score += points
                     
+                    # Add visual feedback
+                    cell_size = self.BOARD_SIZE // self.grid_size
+                    self.add_floating_points(
+                        self.BOARD_X + col * cell_size + cell_size // 2,
+                        self.BOARD_Y + row * cell_size + cell_size // 2,
+                        points,
+                        FLASH_COLORS['correct']
+                    )
+                    self.add_cell_flash(row, col, 'correct')
+                    
                     auto_filled = self.auto_fill_singles(source_cell=(row, col))
                     
                     if auto_filled == 0:
                         self.show_message(f"Correct! +{points} points", self.DARK_GREEN)
+                        self.reset_combo()
                     
                     if game_logic.is_puzzle_complete(self.board, self.solution, self.grid_size):
                         self.win_game()
                 else:
                     self.lives -= 1
+                    self.reset_combo()  # Wrong move resets combo
                     self.show_message("Wrong! -1 life", self.DARK_RED)
                     
                     if self.lives <= 0:
@@ -744,8 +928,10 @@ class SudokuGame:
         if self.game_state == 'menu':
             draw_main_menu(self)
         else:
-            # Update animation
+            # Update all animations and effects
             self.update_animation()
+            self.update_floating_points()
+            self.update_cell_flashes()
             
             # Draw everything using the UI renderer
             draw_game_screen(self)
