@@ -2,6 +2,12 @@
 Sudoku Game Logic
 Author: Red Donaldson
 Date: March 13, 2026
+
+Performance optimizations for 25x25 generation:
+- Constraint propagation with pre-computed available value sets
+- Shuffled symbol list created once per generation
+- Early termination when cells have no valid options
+- Efficient constraint tracking without repeated scans
 """
 
 import random
@@ -9,30 +15,99 @@ import copy
 
 
 def generate_complete_sudoku(grid_size, box_size, symbols):
-    """Generate a complete valid Sudoku board"""
+    """Generate a complete valid Sudoku board using optimized algorithm"""
     board = [[None for _ in range(grid_size)] for _ in range(grid_size)]
-    fill_board(board, grid_size, box_size, symbols)
+    
+    # Pre-shuffle symbols once for randomization
+    shuffled_symbols = symbols.copy()
+    random.shuffle(shuffled_symbols)
+    
+    # Initialize constraint sets for fast validation
+    row_sets = [set() for _ in range(grid_size)]
+    col_sets = [set() for _ in range(grid_size)]
+    box_sets = [[set() for _ in range(grid_size // box_size)] 
+                for _ in range(grid_size // box_size)]
+    
+    fill_board_optimized(board, grid_size, box_size, shuffled_symbols,
+                        row_sets, col_sets, box_sets)
     return board
 
 
-def fill_board(board, grid_size, box_size, symbols, row=0, col=0):
-    """Fill the Sudoku board using backtracking"""
-    if row == grid_size:
+def fill_board_optimized(board, grid_size, box_size, symbols, 
+                        row_sets, col_sets, box_sets, pos=0):
+    """
+    Optimized board filling using constraint propagation.
+    
+    Key optimizations:
+    1. Use pre-computed constraint sets (row_sets, col_sets, box_sets)
+    2. Single shuffled symbol list shared across all calls
+    3. Linear position tracking instead of row/col recursion
+    4. Early exit when no valid symbols available
+    """
+    if pos == grid_size * grid_size:
         return True
-    if col == grid_size:
-        return fill_board(board, grid_size, box_size, symbols, row + 1, 0)
     
-    symbols_copy = symbols.copy()
-    random.shuffle(symbols_copy)
+    row = pos // grid_size
+    col = pos % grid_size
+    box_row = row // box_size
+    box_col = col // box_size
     
-    for symbol in symbols_copy:
-        if is_valid_placement(board, row, col, symbol, grid_size, box_size):
-            board[row][col] = symbol
-            if fill_board(board, grid_size, box_size, symbols, row, col + 1):
-                return True
-            board[row][col] = None
+    # Find valid symbols using constraint sets (O(1) lookups)
+    valid_symbols = []
+    for symbol in symbols:
+        if (symbol not in row_sets[row] and 
+            symbol not in col_sets[col] and 
+            symbol not in box_sets[box_row][box_col]):
+            valid_symbols.append(symbol)
+    
+    # Early termination: no valid options available
+    if not valid_symbols:
+        return False
+    
+    # Try each valid symbol
+    for symbol in valid_symbols:
+        # Place symbol and update constraints
+        board[row][col] = symbol
+        row_sets[row].add(symbol)
+        col_sets[col].add(symbol)
+        box_sets[box_row][box_col].add(symbol)
+        
+        # Recurse to next position
+        if fill_board_optimized(board, grid_size, box_size, symbols,
+                               row_sets, col_sets, box_sets, pos + 1):
+            return True
+        
+        # Backtrack: remove symbol and restore constraints
+        board[row][col] = None
+        row_sets[row].remove(symbol)
+        col_sets[col].remove(symbol)
+        box_sets[box_row][box_col].remove(symbol)
     
     return False
+
+
+def fill_board(board, grid_size, box_size, symbols, row=0, col=0):
+    """Legacy fill_board function for backwards compatibility"""
+    # Delegate to optimized version
+    row_sets = [set() for _ in range(grid_size)]
+    col_sets = [set() for _ in range(grid_size)]
+    box_sets = [[set() for _ in range(grid_size // box_size)] 
+                for _ in range(grid_size // box_size)]
+    
+    # Populate existing constraints from board
+    for r in range(grid_size):
+        for c in range(grid_size):
+            if board[r][c] is not None:
+                symbol = board[r][c]
+                row_sets[r].add(symbol)
+                col_sets[c].add(symbol)
+                box_r = r // box_size
+                box_c = c // box_size
+                box_sets[box_r][box_c].add(symbol)
+    
+    pos = row * grid_size + col
+    return fill_board_optimized(board, grid_size, box_size, symbols,
+                               row_sets, col_sets, box_sets, pos)
 
 
 def is_valid_placement(board, row, col, symbol, grid_size, box_size):
