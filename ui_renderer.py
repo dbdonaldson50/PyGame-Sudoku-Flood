@@ -361,7 +361,7 @@ def draw_settings_modal(game):
     pygame.draw.rect(game.screen, check_color, check_button)
     pygame.draw.rect(game.screen, BLACK, check_button, 2)
     
-    check_text = game.button_font.render("Check Solution", True, WHITE)
+    check_text = game.small_font.render("Check Solution", True, WHITE)
     check_rect = check_text.get_rect(center=check_button.center)
     game.screen.blit(check_text, check_rect)
     
@@ -429,6 +429,6 @@ def draw_game_over_modal(game):
     pygame.draw.rect(game.screen, button_color, newgame_button)
     pygame.draw.rect(game.screen, BLACK, newgame_button, 2)
     
-    newgame_text = game.button_font.render("New Game", True, WHITE)
+    newgame_text = game.small_font.render("New Game", True, WHITE)
     newgame_rect = newgame_text.get_rect(center=newgame_button.center)
     game.screen.blit(newgame_text, newgame_rect)

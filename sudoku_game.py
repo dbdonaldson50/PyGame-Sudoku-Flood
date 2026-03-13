@@ -244,16 +244,16 @@ class SudokuGame:
         self.selected_cell = None
         self.show_message("New game started! Good luck!", self.DARK_BLUE)
     
-    def auto_fill_singles(self, source_cell=None):
+    def auto_fill_singles(self, source_cell=None, award_points=True):
         """Auto-fill cells that have only one possible value"""
         filled_sequence = game_logic.find_auto_fill_cells(
             self.board, self.initial_board, self.grid_size, 
             self.box_size, self.symbols, source_cell
         )
         
-        # Award partial points for auto-filled cells
+        # Award partial points for auto-filled cells (unless from hint)
         filled_count = len(filled_sequence)
-        if filled_count > 0:
+        if filled_count > 0 and award_points:
             points_per_cell = self.difficulty_settings[self.difficulty]['points_per_cell']
             auto_points = (points_per_cell // 2) * filled_count
             self.score += auto_points
@@ -485,7 +485,7 @@ class SudokuGame:
                 self.board[row][col] = self.solution[row][col]
                 self.pencil_marks[row][col].clear()  # Clear pencil marks when placing hint
                 
-                auto_filled = self.auto_fill_singles(source_cell=(row, col))
+                auto_filled = self.auto_fill_singles(source_cell=(row, col), award_points=False)
                 
                 if auto_filled == 0:
                     self.show_message("Hint given! -10 points", self.DARK_BLUE)
