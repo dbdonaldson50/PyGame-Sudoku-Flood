@@ -94,7 +94,7 @@ class SudokuGame:
                 'grid_size': 9,
                 'box_size': 3,
                 'symbols': list('123456789'),
-                'cells_to_remove': 30,
+                'cells_to_remove': 50,
                 'lives': 3,
                 'points_per_cell': 5
             },
@@ -102,7 +102,7 @@ class SudokuGame:
                 'grid_size': 16,
                 'box_size': 4,
                 'symbols': list('0123456789ABCDEF'),
-                'cells_to_remove': 100,
+                'cells_to_remove': 190,
                 'lives': 4,
                 'points_per_cell': 10
             },
@@ -110,7 +110,7 @@ class SudokuGame:
                 'grid_size': 25,
                 'box_size': 5,
                 'symbols': [chr(i) for i in range(ord('A'), ord('Z') + 1) if chr(i) != 'X'],
-                'cells_to_remove': 350,
+                'cells_to_remove': 520,
                 'lives': 5,
                 'points_per_cell': 15
             }
@@ -177,6 +177,21 @@ class SudokuGame:
         check_width = 140
         check_x = modal_x + (modal_width - check_width) // 2
         self.buttons['check'] = pygame.Rect(check_x, diff_y + 70, check_width, 40)
+        
+        # Game over modal buttons
+        gameover_modal_width = 450
+        gameover_modal_height = 300
+        gameover_modal_x = (self.WINDOW_WIDTH - gameover_modal_width) // 2
+        gameover_modal_y = (self.WINDOW_HEIGHT - gameover_modal_height) // 2
+        
+        self.buttons['gameover_modal'] = pygame.Rect(gameover_modal_x, gameover_modal_y, 
+                                                      gameover_modal_width, gameover_modal_height)
+        
+        # New game button in game over modal
+        newgame_width = 140
+        newgame_x = gameover_modal_x + (gameover_modal_width - newgame_width) // 2
+        self.buttons['gameover_newgame'] = pygame.Rect(newgame_x, gameover_modal_y + 220, 
+                                                        newgame_width, 45)
     
     def update_cell_font(self):
         """Update cell font based on grid size"""
@@ -651,6 +666,18 @@ class SudokuGame:
     
     def handle_click(self, pos):
         """Handle mouse clicks"""
+        # Handle game over modal
+        if self.show_win_message or self.show_lose_message:
+            if self.buttons['gameover_modal'].collidepoint(pos):
+                if self.buttons['gameover_newgame'].collidepoint(pos):
+                    self.new_game()
+                return
+            else:
+                # Click outside modal closes it
+                self.show_win_message = False
+                self.show_lose_message = False
+                return
+        
         if self.show_settings:
             # Handle settings modal
             if self.buttons['settings_modal'].collidepoint(pos):
@@ -798,16 +825,14 @@ class SudokuGame:
         timer_rect = timer_text.get_rect(right=self.WINDOW_WIDTH - 80, centery=info_y + 12)
         self.screen.blit(timer_text, timer_rect)
         
-        # Message
-        if self.message and (self.message_timer > 0 or self.game_over):
+        # Temporary message (not game over messages)
+        if self.message and self.message_timer > 0 and not self.game_over:
             lines = self.message.split('\n')
             for i, line in enumerate(lines):
                 msg_text = self.small_font.render(line, True, self.message_color)
                 msg_rect = msg_text.get_rect(center=(self.WINDOW_WIDTH // 2, 135 + i * 22))
                 self.screen.blit(msg_text, msg_rect)
-            
-            if self.message_timer > 0:
-                self.message_timer -= 1
+            self.message_timer -= 1
         
         # Draw board
         self.draw_board()
@@ -825,6 +850,10 @@ class SudokuGame:
         # Draw settings modal if open
         if self.show_settings:
             self.draw_settings_modal()
+        
+        # Draw game over modal if game is over
+        if self.show_win_message or self.show_lose_message:
+            self.draw_game_over_modal()
         
         pygame.display.flip()
     
@@ -968,6 +997,58 @@ class SudokuGame:
         close_text = self.medium_font.render("X", True, self.WHITE)
         close_rect = close_text.get_rect(center=close_button.center)
         self.screen.blit(close_text, close_rect)
+    
+    def draw_game_over_modal(self):
+        """Draw the game over modal"""
+        modal = self.buttons['gameover_modal']
+        
+        # Draw semi-transparent overlay
+        overlay = pygame.Surface((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
+        overlay.set_alpha(128)
+        overlay.fill(self.BLACK)
+        self.screen.blit(overlay, (0, 0))
+        
+        # Draw modal
+        pygame.draw.rect(self.screen, self.WHITE, modal)
+        pygame.draw.rect(self.screen, self.BLACK, modal, 3)
+        
+        # Title - Victory or Game Over
+        if self.show_win_message:
+            title_text = self.large_font.render("Victory!", True, self.DARK_GREEN)
+        else:
+            title_text = self.large_font.render("Game Over", True, self.DARK_RED)
+        title_rect = title_text.get_rect(center=(modal.centerx, modal.top + 50))
+        self.screen.blit(title_text, title_rect)
+        
+        # Display game stats
+        y_offset = modal.top + 110
+        
+        # Score
+        score_text = self.medium_font.render(f"Final Score: {self.score}", True, self.BLACK)
+        score_rect = score_text.get_rect(center=(modal.centerx, y_offset))
+        self.screen.blit(score_text, score_rect)
+        
+        # Time
+        minutes = self.seconds // 60
+        seconds = self.seconds % 60
+        time_text = self.medium_font.render(f"Time: {minutes:02d}:{seconds:02d}", True, self.BLACK)
+        time_rect = time_text.get_rect(center=(modal.centerx, y_offset + 40))
+        self.screen.blit(time_text, time_rect)
+        
+        # Lives remaining (if won)
+        if self.show_win_message:
+            lives_text = self.medium_font.render(f"Lives Remaining: {self.lives}", True, self.BLACK)
+            lives_rect = lives_text.get_rect(center=(modal.centerx, y_offset + 80))
+            self.screen.blit(lives_text, lives_rect)
+        
+        # New game button
+        newgame_button = self.buttons['gameover_newgame']
+        pygame.draw.rect(self.screen, self.DARK_GREEN, newgame_button)
+        pygame.draw.rect(self.screen, self.BLACK, newgame_button, 2)
+        
+        newgame_text = self.button_font.render("New Game", True, self.WHITE)
+        newgame_rect = newgame_text.get_rect(center=newgame_button.center)
+        self.screen.blit(newgame_text, newgame_rect)
     
     def run(self):
         """Main game loop"""
