@@ -745,7 +745,7 @@ def draw_floating_points(game):
 
 
 def draw_combo_indicator(game):
-    """Draw combo streak indicator with pulsing effect"""
+    """Draw combo streak indicator with pulsing glow effect"""
     if game.combo_count <= 0:
         return
     
@@ -756,27 +756,22 @@ def draw_combo_indicator(game):
     combo_idx = min(game.combo_count, COMBO_MAX_LEVEL)
     combo_color = COMBO_COLORS[combo_idx]
     
-    # Create pulsing effect based on frame count
-    # Use game.seconds to create animation
-    pulse_scale = 1.0 + 0.1 * abs((game.seconds * 2) % 20 - 10) / 10
-    
-    # Draw combo text
+    # Draw combo text - no scaling to maintain character size consistency
     combo_text = f"{game.combo_multiplier:.1f}x"
     text_surface = game.large_font.render(combo_text, True, combo_color)
-    
-    # Apply pulse scale
-    original_size = text_surface.get_size()
-    scaled_size = (int(original_size[0] * pulse_scale), int(original_size[1] * pulse_scale))
-    text_surface = pygame.transform.scale(text_surface, scaled_size)
-    
     text_rect = text_surface.get_rect(center=(x, y))
     
-    # Draw glow effect
+    # Draw pulsing glow effect using alpha instead of scaling
+    glow_alpha = int(50 + 50 * abs((game.seconds * 3) % 20 - 10) / 10)
     glow_surface = game.large_font.render(combo_text, True, (255, 255, 255))
-    glow_surface = pygame.transform.scale(glow_surface, (scaled_size[0] + 4, scaled_size[1] + 4))
-    glow_surface.set_alpha(100)
-    glow_rect = glow_surface.get_rect(center=(x, y))
-    game.screen.blit(glow_surface, glow_rect)
+    glow_surface.set_alpha(glow_alpha)
+    
+    # Draw multiple glow layers at same size for pulse effect
+    for offset in range(1, 3):
+        glow_rect = text_surface.get_rect(center=(x + offset, y + offset))
+        game.screen.blit(glow_surface, glow_rect)
+        glow_rect = text_surface.get_rect(center=(x - offset, y - offset))
+        game.screen.blit(glow_surface, glow_rect)
     
     # Draw main text
     game.screen.blit(text_surface, text_rect)

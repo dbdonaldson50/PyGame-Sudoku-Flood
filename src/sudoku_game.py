@@ -44,15 +44,16 @@ class SudokuGame:
         self.YELLOW = YELLOW
         
         # Try to load Ubuntu Mono font, fallback to monospace
+        # All fonts without bold to ensure consistent character sizing
         try:
-            self.title_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['title'], bold=True)
+            self.title_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['title'])
             self.large_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['large'])
             self.medium_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['medium'])
             self.small_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['small'])
             self.button_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['button'])
         except:
             # Fallback to monospace
-            self.title_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['title'], bold=True)
+            self.title_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['title'])
             self.large_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['large'])
             self.medium_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['medium'])
             self.small_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['small'])
@@ -251,11 +252,12 @@ class SudokuGame:
         pencil_slot_size = cell_size / self.box_size
         pencil_size = int(pencil_slot_size * 0.68)  # 68% of slot size for spacing
         
+        # Both fonts without bold to ensure consistent character sizing
         try:
-            self.cell_font = pygame.font.SysFont(FONT_NAME, font_size, bold=True)
+            self.cell_font = pygame.font.SysFont(FONT_NAME, font_size)
             self.pencil_font = pygame.font.SysFont(FONT_NAME, pencil_size)
         except:
-            self.cell_font = pygame.font.SysFont(FONT_FALLBACK, font_size, bold=True)
+            self.cell_font = pygame.font.SysFont(FONT_FALLBACK, font_size)
             self.pencil_font = pygame.font.SysFont(FONT_FALLBACK, pencil_size)
     
     def new_game(self):
