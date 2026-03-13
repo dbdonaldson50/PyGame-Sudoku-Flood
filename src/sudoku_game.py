@@ -89,6 +89,7 @@ class SudokuGame:
         self.message_timer = 0
         self.show_settings = False
         self.show_instructions = False  # Show how to play instructions
+        self.show_remaining_digits = False  # Show remaining digits modal for large grids
         self.mouse_pos = (0, 0)  # Track mouse position for hover effects
         self.game_state = 'menu'  # 'menu' or 'playing'
         
@@ -156,13 +157,13 @@ class SudokuGame:
         self.buttons['instructions_modal'] = pygame.Rect(modal_x, modal_y, modal_width, modal_height)
         self.buttons['instructions_close'] = pygame.Rect(modal_x + modal_width - 50, modal_y + 10, 40, 40)
         
-        # Control buttons (New Game, Hint, Undo, Settings) - fixed position
+        # Control buttons (New Game, Hint, Undo, Settings, Remaining) - fixed position
         button_width = 72
         button_height = 35
         button_y = 945  # Fixed position at bottom
         spacing = 8
         
-        total_buttons = 4
+        total_buttons = 5  # Now includes Remaining Digits button
         start_x = (self.WINDOW_WIDTH - (button_width * total_buttons + spacing * (total_buttons - 1))) // 2
         
         self.buttons['new_game'] = pygame.Rect(start_x, button_y, button_width, button_height)
@@ -171,6 +172,8 @@ class SudokuGame:
         self.buttons['undo'] = pygame.Rect(start_x + (button_width + spacing) * 2, button_y,
                                       button_width, button_height)
         self.buttons['settings'] = pygame.Rect(start_x + (button_width + spacing) * 3, button_y, 
+                                       button_width, button_height)
+        self.buttons['remaining'] = pygame.Rect(start_x + (button_width + spacing) * 4, button_y,
                                        button_width, button_height)
         
         # Settings modal buttons
@@ -220,6 +223,17 @@ class SudokuGame:
         menu_x = gameover_modal_x + (gameover_modal_width - menu_width) // 2
         self.buttons['gameover_menu'] = pygame.Rect(menu_x, gameover_modal_y + 220 + 55, 
                                                      menu_width, 45)
+        
+        # Remaining digits modal (for large grids)
+        remaining_modal_width = 500
+        remaining_modal_height = 400
+        remaining_modal_x = (self.WINDOW_WIDTH - remaining_modal_width) // 2
+        remaining_modal_y = (self.WINDOW_HEIGHT - remaining_modal_height) // 2
+        
+        self.buttons['remaining_modal'] = pygame.Rect(remaining_modal_x, remaining_modal_y,
+                                                       remaining_modal_width, remaining_modal_height)
+        self.buttons['remaining_close'] = pygame.Rect(remaining_modal_x + remaining_modal_width - 40,
+                                                       remaining_modal_y + 10, 30, 30)
     
     def update_cell_font(self):
         """Update cell font size based on grid size"""
@@ -834,6 +848,16 @@ class SudokuGame:
                 self.show_settings = False
                 return
         
+        if self.show_remaining_digits:
+            # Handle remaining digits modal
+            if self.buttons['remaining_modal'].collidepoint(pos):
+                if self.buttons['remaining_close'].collidepoint(pos):
+                    self.show_remaining_digits = False
+                return
+            else:
+                self.show_remaining_digits = False
+                return
+        
         # Check board cells
         cell = self.get_cell_from_pos(pos)
         if cell:
@@ -851,6 +875,8 @@ class SudokuGame:
             self.undo()
         elif self.buttons['settings'].collidepoint(pos):
             self.show_settings = True
+        elif self.buttons['remaining'].collidepoint(pos):
+            self.show_remaining_digits = True
     
     def handle_key(self, key):
         """Handle keyboard events"""

@@ -183,6 +183,10 @@ def draw_game_screen(game):
     if game.show_settings:
         draw_settings_modal(game)
     
+    # Draw remaining digits modal if open
+    if game.show_remaining_digits:
+        draw_remaining_digits_modal(game)
+    
     # Draw game over modal if game is over
     if game.show_win_message or game.show_lose_message:
         draw_game_over_modal(game)
@@ -379,11 +383,18 @@ def draw_remaining_numbers(game):
     """Draw remaining numbers count for each symbol"""
     # Calculate remaining count for each symbol
     remaining = {}
+    total_remaining = 0
     for symbol in game.symbols:
         total_needed = game.grid_size
         placed = sum(1 for i in range(game.grid_size) for j in range(game.grid_size) 
                      if game.solution[i][j] == symbol and game.board[i][j] == symbol)
         remaining[symbol] = total_needed - placed
+        total_remaining += remaining[symbol]
+    
+    # For large grids (16x16, 25x25), only show on screen when < 10 digits remaining
+    # Otherwise hide them (user can click "Remaining" button to see modal)
+    if game.grid_size > 9 and total_remaining >= 10:
+        return  # Don't draw anything, user must open modal
     
     # Draw title
     title_text = game.small_font.render("Remaining:", True, BLACK)
@@ -457,6 +468,10 @@ def draw_control_buttons(game):
         ('undo', 'Undo', UNDO_COLOR, (180, 180, 180)),
         ('settings', 'Settings', PURPLE, HOVER_PURPLE)
     ]
+    
+    # Add "Remaining" button for large grids (16x16, 25x25)
+    if game.grid_size > 9:
+        button_data.append(('remaining', 'Digits', BUTTON_ORANGE, HOVER_ORANGE))
     
     for key, text, color, hover_color in button_data:
         rect = game.buttons[key]
@@ -539,6 +554,93 @@ def draw_settings_modal(game):
     
     pygame.draw.rect(game.screen, close_color, close_button)
     pygame.draw.rect(game.screen, BLACK, close_button, 2)
+    
+    close_text = game.medium_font.render("X", True, WHITE)
+    close_rect = close_text.get_rect(center=close_button.center)
+    game.screen.blit(close_text, close_rect)
+
+
+def draw_remaining_digits_modal(game):
+    """Draw the remaining digits modal for large grids"""
+    modal = game.buttons['remaining_modal']
+    
+    # Draw semi-transparent overlay
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.set_alpha(128)
+    overlay.fill(BLACK)
+    game.screen.blit(overlay, (0, 0))
+    
+    # Draw modal
+    pygame.draw.rect(game.screen, WHITE, modal, border_radius=10)
+    pygame.draw.rect(game.screen, BLACK, modal, 3, border_radius=10)
+    
+    # Title
+    title_text = game.large_font.render("Remaining Digits", True, BUTTON_ORANGE)
+    title_rect = title_text.get_rect(center=(modal.centerx, modal.top + 40))
+    game.screen.blit(title_text, title_rect)
+    
+    # Calculate remaining count for each symbol
+    remaining = {}
+    total_remaining = 0
+    for symbol in game.symbols:
+        total_needed = game.grid_size
+        placed = sum(1 for i in range(game.grid_size) for j in range(game.grid_size) 
+                     if game.solution[i][j] == symbol and game.board[i][j] == symbol)
+        remaining[symbol] = total_needed - placed
+        total_remaining += remaining[symbol]
+    
+    # Display total remaining
+    total_text = game.medium_font.render(f"Total Remaining: {total_remaining}", True, DARK_GREEN)
+    total_rect = total_text.get_rect(center=(modal.centerx, modal.top + 85))
+    game.screen.blit(total_text, total_rect)
+    
+    # Draw counts in grid format
+    y_pos = modal.top + 130
+    x_start = modal.left + 30
+    
+    # Determine layout based on grid size
+    if game.grid_size == 16:
+        items_per_row = 8
+        spacing_x = 55
+        spacing_y = 35
+    else:  # 25x25
+        items_per_row = 10
+        spacing_x = 45
+        spacing_y = 32
+    
+    x_pos = x_start
+    
+    for idx, symbol in enumerate(game.symbols):
+        count = remaining[symbol]
+        
+        # Color code: gray if complete, dark green if low, black otherwise
+        if count == 0:
+            color = GRAY
+        elif count <= 2:
+            color = DARK_RED  # Nearly complete
+        elif count <= 5:
+            color = BUTTON_ORANGE  # Getting close
+        else:
+            color = BLACK
+        
+        # Format as "A: 5" (symbol: count)
+        count_text = game.small_font.render(f"{symbol}: {count}", True, color)
+        count_rect = count_text.get_rect(left=x_pos, top=y_pos)
+        game.screen.blit(count_text, count_rect)
+        
+        # Move to next position
+        x_pos += spacing_x
+        if (idx + 1) % items_per_row == 0:
+            x_pos = x_start
+            y_pos += spacing_y
+    
+    # Close button
+    close_button = game.buttons['remaining_close']
+    is_close_hovering = close_button.collidepoint(game.mouse_pos)
+    close_color = HOVER_RED if is_close_hovering else DARK_RED
+    
+    pygame.draw.rect(game.screen, close_color, close_button, border_radius=5)
+    pygame.draw.rect(game.screen, BLACK, close_button, 2, border_radius=5)
     
     close_text = game.medium_font.render("X", True, WHITE)
     close_rect = close_text.get_rect(center=close_button.center)

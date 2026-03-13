@@ -29,9 +29,11 @@ HOVER_BLUE = (140, 180, 255)  # Brighter blue for button hover
 HOVER_GREEN = (100, 180, 100)  # Brighter green for button hover
 HOVER_PURPLE = (150, 100, 200)  # Brighter purple for button hover
 HOVER_RED = (230, 100, 100)  # Brighter red for button hover
+HOVER_ORANGE = (255, 165, 80)  # Brighter orange for button hover
 SELECTED_GLOW = (100, 150, 255)  # Glow color for selected cell
 HIGHLIGHT_NUMBER = (255, 255, 200)  # Highlight for matching numbers
 UNDO_COLOR = (150, 150, 150)  # Color for undo button
+BUTTON_ORANGE = (255, 140, 0)  # Orange color for remaining digits button
 
 # Font settings
 FONT_NAME = 'ubuntumono'
