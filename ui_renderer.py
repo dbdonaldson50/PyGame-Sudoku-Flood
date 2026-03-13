@@ -176,7 +176,7 @@ def draw_pencil_marks(game, row, col, x, y, cell_size):
         mark_y = y + mark_row * mark_spacing_y + mark_spacing_y // 2
         
         # Draw the mark
-        mark_text = game.pencil_font.render(str(mark), True, GRAY)
+        mark_text = game.pencil_font.render(str(mark), True, (100, 100, 100))  # Dark gray for visibility
         mark_rect = mark_text.get_rect(center=(mark_x, mark_y))
         game.screen.blit(mark_text, mark_rect)
 
