@@ -68,6 +68,7 @@ class SudokuGame:
         self.solution = []
         self.initial_board = []
         self.pencil_marks = []  # 2D array of sets for pencil marks
+        self.undo_history = []  # List of (board_state, pencil_marks_state, score) tuples
         self.lives = 3
         self.max_lives = 3
         self.score = 0
@@ -87,6 +88,7 @@ class SudokuGame:
         self.message_color = self.BLACK
         self.message_timer = 0
         self.show_settings = False
+        self.mouse_pos = (0, 0)  # Track mouse position for hover effects
         
         # Animation state
         self.animation_queue = []
@@ -112,18 +114,21 @@ class SudokuGame:
     
     def create_buttons(self):
         """Create button rectangles"""
-        # Control buttons (New Game, Hint, Settings) - fixed position
-        button_width = 95
+        # Control buttons (New Game, Hint, Undo, Settings) - fixed position
+        button_width = 72
         button_height = 35
         button_y = 945  # Fixed position at bottom
-        spacing = 10
+        spacing = 8
         
-        start_x = (self.WINDOW_WIDTH - (button_width * 3 + spacing * 2)) // 2
+        total_buttons = 4
+        start_x = (self.WINDOW_WIDTH - (button_width * total_buttons + spacing * (total_buttons - 1))) // 2
         
         self.buttons['new_game'] = pygame.Rect(start_x, button_y, button_width, button_height)
         self.buttons['hint'] = pygame.Rect(start_x + button_width + spacing, button_y, 
                                       button_width, button_height)
-        self.buttons['settings'] = pygame.Rect(start_x + (button_width + spacing) * 2, button_y, 
+        self.buttons['undo'] = pygame.Rect(start_x + (button_width + spacing) * 2, button_y,
+                                      button_width, button_height)
+        self.buttons['settings'] = pygame.Rect(start_x + (button_width + spacing) * 3, button_y, 
                                        button_width, button_height)
         
         # Settings modal buttons
@@ -200,6 +205,7 @@ class SudokuGame:
         self.score = 0
         self.seconds = 0
         self.pencil_mode = False
+        self.undo_history = []  # Clear undo history on new game
         
         # Update grid settings based on difficulty
         settings = self.difficulty_settings[self.difficulty]
@@ -329,6 +335,10 @@ class SudokuGame:
         if self.initial_board[row][col] is not None:
             return
         
+        # Save state before making changes (for undo)
+        if symbol != 0 or self.board[row][col] is not None or self.pencil_marks[row][col]:
+            self.save_state()
+        
         # Convert number to string symbol if needed
         if isinstance(symbol, int):
             if symbol == 0:
@@ -385,6 +395,9 @@ class SudokuGame:
         if self.initial_board[row][col] is not None:
             return
         
+        # Save state before making changes (for undo)
+        self.save_state()
+        
         # Convert to uppercase and check if valid symbol
         char = char.upper()
         if char in self.symbols:
@@ -423,6 +436,35 @@ class SudokuGame:
         self.pencil_mode = not self.pencil_mode
         mode = "Pencil" if self.pencil_mode else "Pen"
         self.show_message(f"{mode} mode", self.DARK_BLUE)
+    
+    def save_state(self):
+        """Save current board state for undo"""
+        # Deep copy the board and pencil marks
+        board_copy = copy.deepcopy(self.board)
+        pencil_copy = copy.deepcopy(self.pencil_marks)
+        
+        self.undo_history.append((board_copy, pencil_copy, self.score))
+        
+        # Limit history size
+        if len(self.undo_history) > MAX_UNDO_HISTORY:
+            self.undo_history.pop(0)
+    
+    def undo(self):
+        """Undo the last move"""
+        if self.game_over:
+            return
+        
+        if not self.undo_history:
+            self.show_message("Nothing to undo!", self.DARK_RED)
+            return
+        
+        # Restore previous state
+        board_state, pencil_state, score_state = self.undo_history.pop()
+        self.board = copy.deepcopy(board_state)
+        self.pencil_marks = copy.deepcopy(pencil_state)
+        self.score = score_state
+        
+        self.show_message("Move undone!", self.DARK_BLUE)
     
     def give_hint(self):
         """Give a hint by revealing one cell"""
@@ -495,6 +537,9 @@ class SudokuGame:
     
     def handle_click(self, pos):
         """Handle mouse clicks"""
+        # Update mouse position for hover effects
+        self.mouse_pos = pos
+        
         # Handle game over modal
         if self.show_win_message or self.show_lose_message:
             if self.buttons['gameover_modal'].collidepoint(pos):
@@ -544,12 +589,20 @@ class SudokuGame:
             self.new_game()
         elif self.buttons['hint'].collidepoint(pos):
             self.give_hint()
+        elif self.buttons['undo'].collidepoint(pos):
+            self.undo()
         elif self.buttons['settings'].collidepoint(pos):
             self.show_settings = True
     
     def handle_key(self, key):
         """Handle keyboard events"""
         if self.game_over:
+            return
+        
+        # Check for Ctrl+Z (undo)
+        keys = pygame.key.get_pressed()
+        if (keys[pygame.K_LCTRL] or keys[pygame.K_RCTRL] or keys[pygame.K_LMETA] or keys[pygame.K_RMETA]) and key == pygame.K_z:
+            self.undo()
             return
         
         # Toggle pencil mode with 'P' key
@@ -630,6 +683,8 @@ class SudokuGame:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     self.handle_click(event.pos)
+                elif event.type == pygame.MOUSEMOTION:
+                    self.mouse_pos = event.pos  # Track mouse position for hover effects
                 elif event.type == pygame.KEYDOWN:
                     self.handle_key(event.key)
                 elif event.type == self.timer_event:

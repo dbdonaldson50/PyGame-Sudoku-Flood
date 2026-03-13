@@ -24,6 +24,15 @@ DARK_RED = (198, 40, 40)
 YELLOW = (255, 255, 200)
 CYAN = (0, 255, 255)
 
+# Enhanced UI colors
+HOVER_BLUE = (140, 180, 255)  # Brighter blue for button hover
+HOVER_GREEN = (100, 180, 100)  # Brighter green for button hover
+HOVER_PURPLE = (150, 100, 200)  # Brighter purple for button hover
+HOVER_RED = (230, 100, 100)  # Brighter red for button hover
+SELECTED_GLOW = (100, 150, 255)  # Glow color for selected cell
+HIGHLIGHT_NUMBER = (255, 255, 200)  # Highlight for matching numbers
+UNDO_COLOR = (150, 150, 150)  # Color for undo button
+
 # Font settings
 FONT_NAME = 'ubuntumono'
 FONT_FALLBACK = 'monospace'
@@ -66,3 +75,7 @@ DIFFICULTY_SETTINGS = {
 # Animation settings
 ANIMATION_SPEED = 10  # frames per cell transition
 FPS = 60
+
+# UI Enhancement settings
+MAX_UNDO_HISTORY = 50  # Maximum number of moves to track for undo
+GLOW_INTENSITY = 3  # Border width for selected cell glow
