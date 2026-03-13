@@ -8,7 +8,7 @@ have expected values for different difficulty levels.
 """
 
 import pytest
-from constants import (
+from src.constants import (
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
     BOARD_Y,

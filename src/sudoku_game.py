@@ -14,9 +14,9 @@ import sys
 sys.setrecursionlimit(10000)
 
 # Import game modules
-from constants import *
-import game_logic
-from ui_renderer import draw_game_screen, draw_main_menu
+from .constants import *
+from . import game_logic
+from .ui_renderer import draw_game_screen, draw_main_menu
 
 
 class SudokuGame:

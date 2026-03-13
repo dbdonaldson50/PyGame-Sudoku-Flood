@@ -20,7 +20,7 @@ def run_tests(args):
         cmd.append('-v')
     
     if args.coverage:
-        cmd.extend(['--cov=.', '--cov-report=html', '--cov-report=term'])
+        cmd.extend(['--cov=src', '--cov-report=html', '--cov-report=term'])
     
     if args.fast:
         cmd.extend(['-m', 'not slow'])

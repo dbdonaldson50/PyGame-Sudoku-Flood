@@ -5,7 +5,7 @@ Date: March 13, 2026
 """
 
 import pygame
-from constants import *
+from .constants import *
 
 
 def draw_main_menu(game):

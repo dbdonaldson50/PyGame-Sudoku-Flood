@@ -8,8 +8,8 @@ Tests generation time for 9x9, 16x16, and 25x25 grids
 
 import time
 import sys
-from constants import DIFFICULTY_SETTINGS
-from game_logic import generate_complete_sudoku
+from src.constants import DIFFICULTY_SETTINGS
+from src.game_logic import generate_complete_sudoku
 
 
 def test_generation_performance(difficulty_name, num_tests=3):

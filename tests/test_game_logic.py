@@ -13,7 +13,7 @@ Tests cover:
 
 import pytest
 import copy
-from game_logic import (
+from src.game_logic import (
     generate_complete_sudoku,
     fill_board,
     is_valid_placement,
