@@ -261,7 +261,7 @@ class SudokuGame:
         
         return possible
     
-    def auto_fill_singles(self):
+    def auto_fill_singles(self, source_cell=None):
         """Auto-fill cells that have only one possible value"""
         filled_sequence = []
         changes_made = True
@@ -289,6 +289,11 @@ class SudokuGame:
                         filled_sequence.append((i, j, value))
                         changes_made = True
         
+        # Sort filled sequence by distance from source cell if provided
+        if source_cell and filled_sequence:
+            source_row, source_col = source_cell
+            filled_sequence.sort(key=lambda cell: abs(cell[0] - source_row) + abs(cell[1] - source_col))
+        
         # Award partial points for auto-filled cells
         filled_count = len(filled_sequence)
         if filled_count > 0:
@@ -302,11 +307,11 @@ class SudokuGame:
                 self.show_message(f"+{auto_points} pts ({filled_count} auto-filled)", self.DARK_BLUE)
             
             # Start animation
-            self.start_animation(filled_sequence)
+            self.start_animation(filled_sequence, source_cell)
         
         return filled_count
     
-    def start_animation(self, filled_sequence):
+    def start_animation(self, filled_sequence, source_cell=None):
         """Initialize animation for auto-filled cells"""
         if not filled_sequence:
             return
@@ -314,8 +319,11 @@ class SudokuGame:
         self.animation_queue = filled_sequence.copy()
         self.current_animation_frame = 0
         
-        # Fill the first cell immediately (laser appears there)
-        if len(filled_sequence) > 0:
+        # Set laser source to the user's cell if provided, otherwise first filled cell
+        if source_cell:
+            self.laser_source = source_cell
+        else:
+            # Fill the first cell immediately if no source provided
             row, col, value = filled_sequence[0]
             self.board[row][col] = value
             self.laser_source = (row, col)
@@ -331,17 +339,17 @@ class SudokuGame:
         if self.current_animation_frame >= self.animation_speed:
             self.current_animation_frame = 0
             
-            if len(self.animation_queue) > 1:
-                # Fill the next cell that the laser is about to reach
-                row, col, value = self.animation_queue[1]
+            # Fill the first cell in queue that the laser just reached
+            if self.animation_queue:
+                row, col, value = self.animation_queue[0]
                 self.board[row][col] = value
                 
-                # Set the next cell as the laser source
+                # Set this cell as the new laser source
                 self.laser_source = (row, col)
                 self.animation_queue.pop(0)
-            else:
-                # Animation complete
-                self.animation_queue = []
+            
+            # Check if animation is complete
+            if not self.animation_queue:
                 self.laser_source = None
     
     def get_cell_center(self, row, col):
@@ -352,12 +360,12 @@ class SudokuGame:
     
     def draw_laser_effect(self):
         """Draw laser effect between animated cells"""
-        if len(self.animation_queue) < 2 or self.laser_source is None:
+        if not self.animation_queue or self.laser_source is None:
             return
         
         # Get source and target cells
         source_row, source_col = self.laser_source
-        target_row, target_col = self.animation_queue[1][0], self.animation_queue[1][1]
+        target_row, target_col = self.animation_queue[0][0], self.animation_queue[0][1]
         
         # Get center points
         source_pos = self.get_cell_center(source_row, source_col)
@@ -417,8 +425,8 @@ class SudokuGame:
             points = self.difficulty_settings[self.difficulty]['points_per_cell']
             self.score += points
             
-            # Auto-fill cells with only one possibility
-            auto_filled = self.auto_fill_singles()
+            # Auto-fill cells with only one possibility, starting from current cell
+            auto_filled = self.auto_fill_singles(source_cell=(row, col))
             
             # Show message about placement (auto-fill message will override if any were filled)
             if auto_filled == 0:
@@ -461,8 +469,8 @@ class SudokuGame:
                 row, col = random.choice(empty_cells)
                 self.board[row][col] = self.solution[row][col]
                 
-                # Auto-fill cells with only one possibility after hint
-                auto_filled = self.auto_fill_singles()
+                # Auto-fill cells with only one possibility after hint, starting from hint cell
+                auto_filled = self.auto_fill_singles(source_cell=(row, col))
                 
                 # Show message (auto-fill message will override if any were filled)
                 if auto_filled == 0:
@@ -582,6 +590,9 @@ class SudokuGame:
         # Handle number input (1-9 and 0 for erase)
         if key in range(pygame.K_0, pygame.K_9 + 1):
             self.place_number(key - pygame.K_0)
+        # Handle numpad input
+        elif key in range(pygame.K_KP0, pygame.K_KP9 + 1):
+            self.place_number(key - pygame.K_KP0)
         elif key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
             self.place_number(0)
         
