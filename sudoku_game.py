@@ -63,6 +63,7 @@ class SudokuGame:
         self.message = ""
         self.message_color = self.BLACK
         self.message_timer = 0
+        self.show_settings = False
         
         # Difficulty settings
         self.difficulty_settings = {
@@ -96,7 +97,7 @@ class SudokuGame:
         buttons['new_game'] = pygame.Rect(start_x, button_y, button_width, button_height)
         buttons['hint'] = pygame.Rect(start_x + button_width + spacing, button_y, 
                                       button_width, button_height)
-        buttons['check'] = pygame.Rect(start_x + (button_width + spacing) * 2, button_y, 
+        buttons['settings'] = pygame.Rect(start_x + (button_width + spacing) * 2, button_y, 
                                        button_width, button_height)
         
         # Number buttons
@@ -116,8 +117,17 @@ class SudokuGame:
             number_y, number_size, number_size
         )
         
-        # Difficulty buttons
-        diff_y = 750
+        # Settings modal buttons (positioned when settings is open)
+        modal_width = 400
+        modal_height = 300
+        modal_x = (self.WINDOW_WIDTH - modal_width) // 2
+        modal_y = (self.WINDOW_HEIGHT - modal_height) // 2
+        
+        buttons['settings_modal'] = pygame.Rect(modal_x, modal_y, modal_width, modal_height)
+        buttons['settings_close'] = pygame.Rect(modal_x + modal_width - 35, modal_y + 5, 30, 30)
+        
+        # Difficulty buttons in settings
+        diff_y = modal_y + 100
         diff_width = 100
         diff_spacing = 20
         diff_start_x = (self.WINDOW_WIDTH - (diff_width * 3 + diff_spacing * 2)) // 2
@@ -127,6 +137,9 @@ class SudokuGame:
                                        diff_y, diff_width, 35)
         buttons['hard'] = pygame.Rect(diff_start_x + (diff_width + diff_spacing) * 2, 
                                       diff_y, diff_width, 35)
+        
+        # Check button in settings
+        buttons['check'] = pygame.Rect(diff_start_x + diff_width, diff_y + 60, diff_width, 40)
         
         return buttons
     
@@ -342,6 +355,27 @@ class SudokuGame:
     
     def handle_click(self, pos):
         """Handle mouse click events"""
+        # If settings modal is open, handle those clicks first
+        if self.show_settings:
+            if self.buttons['settings_close'].collidepoint(pos):
+                self.show_settings = False
+                return
+            elif self.buttons['settings_modal'].collidepoint(pos):
+                # Click inside modal
+                if self.buttons['easy'].collidepoint(pos):
+                    self.difficulty = 'easy'
+                elif self.buttons['medium'].collidepoint(pos):
+                    self.difficulty = 'medium'
+                elif self.buttons['hard'].collidepoint(pos):
+                    self.difficulty = 'hard'
+                elif self.buttons['check'].collidepoint(pos):
+                    self.check_solution()
+                return
+            else:
+                # Click outside modal - close it
+                self.show_settings = False
+                return
+        
         # Check board cells
         cell = self.get_cell_from_pos(pos)
         if cell:
@@ -355,16 +389,10 @@ class SudokuGame:
             self.new_game()
         elif self.buttons['hint'].collidepoint(pos):
             self.give_hint()
-        elif self.buttons['check'].collidepoint(pos):
-            self.check_solution()
+        elif self.buttons['settings'].collidepoint(pos):
+            self.show_settings = True
         elif self.buttons['erase'].collidepoint(pos):
             self.place_number(0)
-        elif self.buttons['easy'].collidepoint(pos):
-            self.difficulty = 'easy'
-        elif self.buttons['medium'].collidepoint(pos):
-            self.difficulty = 'medium'
-        elif self.buttons['hard'].collidepoint(pos):
-            self.difficulty = 'hard'
         else:
             # Check number buttons
             for i in range(1, 10):
@@ -431,8 +459,9 @@ class SudokuGame:
         # Draw control buttons
         self.draw_control_buttons()
         
-        # Draw difficulty selector
-        self.draw_difficulty_selector()
+        # Draw settings modal if open
+        if self.show_settings:
+            self.draw_settings_modal()
         
         pygame.display.flip()
     
@@ -506,7 +535,7 @@ class SudokuGame:
         buttons_info = [
             ('new_game', 'New Game'),
             ('hint', 'Hint (-10)'),
-            ('check', 'Check')
+            ('settings', 'Settings')
         ]
         
         for btn_name, label in buttons_info:
@@ -518,13 +547,37 @@ class SudokuGame:
             text_rect = text.get_rect(center=btn.center)
             self.screen.blit(text, text_rect)
     
-    def draw_difficulty_selector(self):
-        """Draw difficulty selector buttons"""
-        # Label
-        label = self.medium_font.render("Difficulty:", True, self.BLACK)
-        label_rect = label.get_rect(center=(self.WINDOW_WIDTH // 2, 720))
-        self.screen.blit(label, label_rect)
+    def draw_settings_modal(self):
+        """Draw settings modal overlay"""
+        # Draw semi-transparent overlay
+        overlay = pygame.Surface((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
+        overlay.set_alpha(128)
+        overlay.fill(self.BLACK)
+        self.screen.blit(overlay, (0, 0))
         
+        # Draw modal background
+        modal = self.buttons['settings_modal']
+        pygame.draw.rect(self.screen, self.WHITE, modal, border_radius=10)
+        pygame.draw.rect(self.screen, self.DARK_BLUE, modal, 4, border_radius=10)
+        
+        # Draw close button
+        close_btn = self.buttons['settings_close']
+        pygame.draw.rect(self.screen, self.DARK_RED, close_btn, border_radius=5)
+        close_text = self.small_font.render('✖', True, self.WHITE)
+        close_rect = close_text.get_rect(center=close_btn.center)
+        self.screen.blit(close_text, close_rect)
+        
+        # Title
+        title = self.large_font.render('Settings', True, self.PURPLE)
+        title_rect = title.get_rect(center=(self.WINDOW_WIDTH // 2, modal.top + 40))
+        self.screen.blit(title, title_rect)
+        
+        # Difficulty label
+        diff_label = self.medium_font.render('Difficulty:', True, self.BLACK)
+        diff_label_rect = diff_label.get_rect(center=(self.WINDOW_WIDTH // 2, modal.top + 80))
+        self.screen.blit(diff_label, diff_label_rect)
+        
+        # Difficulty buttons
         difficulties = ['easy', 'medium', 'hard']
         for diff in difficulties:
             btn = self.buttons[diff]
@@ -542,6 +595,19 @@ class SudokuGame:
             text = self.small_font.render(diff.capitalize(), True, text_color)
             text_rect = text.get_rect(center=btn.center)
             self.screen.blit(text, text_rect)
+        
+        # Check button
+        check_btn = self.buttons['check']
+        pygame.draw.rect(self.screen, self.DARK_BLUE, check_btn, border_radius=8)
+        pygame.draw.rect(self.screen, self.BLACK, check_btn, 2, border_radius=8)
+        check_text = self.small_font.render('Check Solution', True, self.WHITE)
+        check_text_rect = check_text.get_rect(center=check_btn.center)
+        self.screen.blit(check_text, check_text_rect)
+        
+        # Info text
+        info_text = self.small_font.render('Click outside to close', True, self.GRAY)
+        info_rect = info_text.get_rect(center=(self.WINDOW_WIDTH // 2, modal.bottom - 30))
+        self.screen.blit(info_text, info_rect)
     
     def run(self):
         """Main game loop"""
