@@ -131,8 +131,9 @@ class SudokuGame:
         """Create UI buttons"""
         self.buttons = {}
         
-        # Control buttons
-        button_y = self.BOARD_Y + self.BOARD_SIZE + 80
+        # Control buttons - fixed position at bottom (below max board size)
+        # Max board: BOARD_Y (180) + max BOARD_SIZE (720) = 900
+        button_y = 945  # Fixed position to stay within 1000px window
         button_width = 100
         button_height = 35
         spacing = 15
@@ -145,8 +146,8 @@ class SudokuGame:
         self.buttons['settings'] = pygame.Rect(start_x + (button_width + spacing) * 2, button_y, 
                                        button_width, button_height)
         
-        # Cell confirm/clear buttons (for 16x16 and 25x25)
-        confirm_y = self.BOARD_Y + self.BOARD_SIZE + 20
+        # Cell confirm/clear buttons (for 16x16 and 25x25) - fixed position
+        confirm_y = 905  # 5px below max board
         self.buttons['confirm'] = pygame.Rect((self.WINDOW_WIDTH - 180) // 2, confirm_y, 85, 35)
         self.buttons['clear_cell'] = pygame.Rect((self.WINDOW_WIDTH + 10) // 2, confirm_y, 85, 35)
         
@@ -217,9 +218,6 @@ class SudokuGame:
             self.BOARD_SIZE = 700  # 700/25 = 28px per cell
         
         self.BOARD_X = (self.WINDOW_WIDTH - self.BOARD_SIZE) // 2
-        
-        # Update button positions based on new board size
-        self.create_buttons()
         
         # Update cell font
         self.update_cell_font()
