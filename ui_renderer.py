@@ -152,7 +152,7 @@ def draw_game_screen(game):
     # Draw title
     draw_title(game)
     
-    # Draw game info (lives, score, timer)
+    # Draw game info (lives, score, timer, combo)
     draw_game_info(game)
     
     # Draw temporary messages
@@ -164,11 +164,17 @@ def draw_game_screen(game):
     # Draw remaining numbers count
     draw_remaining_numbers(game)
     
-    # Draw board
+    # Draw board with cell flash effects
     draw_board(game)
     
     # Draw laser animation effect
     draw_laser_effect(game)
+    
+    # Draw combo indicator
+    draw_combo_indicator(game)
+    
+    # Draw floating points
+    draw_floating_points(game)
     
     # Draw control buttons
     draw_control_buttons(game)
@@ -192,17 +198,29 @@ def draw_title(game):
 
 
 def draw_game_info(game):
-    """Draw lives, score, and timer"""
+    """Draw lives, score, timer, and combo"""
     info_y = 90
     
     # Lives
     lives_text = game.medium_font.render(f"Lives: {game.lives}", True, DARK_RED)
     game.screen.blit(lives_text, (80, info_y))
     
-    # Score
+    # Score (center)
     score_text = game.medium_font.render(f"Score: {game.score}", True, DARK_GREEN)
     score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, info_y + 12))
     game.screen.blit(score_text, score_rect)
+    
+    # Combo indicator (below score if active)
+    if game.combo_count > 0:
+        combo_idx = min(game.combo_count, COMBO_MAX_LEVEL)
+        combo_color = COMBO_COLORS[combo_idx]
+        combo_text = game.small_font.render(
+            f"{game.combo_multiplier:.1f}x COMBO", 
+            True, 
+            combo_color
+        )
+        combo_rect = combo_text.get_rect(center=(WINDOW_WIDTH // 2, info_y + 38))
+        game.screen.blit(combo_text, combo_rect)
     
     # Timer
     minutes = game.seconds // 60
@@ -224,7 +242,7 @@ def draw_temporary_message(game):
 
 
 def draw_board(game):
-    """Draw the Sudoku board"""
+    """Draw the Sudoku board with cell flash effects"""
     cell_size = game.BOARD_SIZE // game.grid_size
     
     # Get selected cell value for highlighting
@@ -238,8 +256,20 @@ def draw_board(game):
             x = game.BOARD_X + j * cell_size
             y = BOARD_Y + i * cell_size
             
+            # Check if this cell has a flash effect
+            flash_color = None
+            for flash_data in game.cell_flash_effects:
+                if flash_data['row'] == i and flash_data['col'] == j:
+                    # Calculate alpha based on timer (fade out effect)
+                    alpha = int(255 * (flash_data['timer'] / FLASH_DURATION))
+                    flash_color = flash_data['color']
+                    break
+            
             # Determine cell color
-            if game.selected_cell == (i, j):
+            if flash_color:
+                # Flash effect takes priority
+                color = flash_color
+            elif game.selected_cell == (i, j):
                 color = BLUE
             elif game.initial_board[i][j] is not None:
                 color = LIGHT_GRAY
@@ -581,3 +611,75 @@ def draw_game_over_modal(game):
     menu_text = game.small_font.render("Main Menu", True, WHITE)
     menu_rect = menu_text.get_rect(center=menu_button.center)
     game.screen.blit(menu_text, menu_rect)
+
+
+def draw_floating_points(game):
+    """Draw floating point animations"""
+    for point_data in game.floating_points:
+        x = int(point_data['x'])
+        y = int(point_data['y'])
+        points = point_data['points']
+        color = point_data['color']
+        timer = point_data['timer']
+        
+        # Calculate alpha based on timer (fade out effect)
+        alpha = int(255 * (timer / FLOATING_TEXT_DURATION))
+        alpha = max(50, min(255, alpha))  # Clamp between 50-255
+        
+        # Create text with shadow for better visibility
+        point_text = f"+{points}"
+        
+        # Shadow
+        shadow_surface = game.medium_font.render(point_text, True, BLACK)
+        shadow_rect = shadow_surface.get_rect(center=(x + 2, y + 2))
+        shadow_surface.set_alpha(alpha // 2)
+        game.screen.blit(shadow_surface, shadow_rect)
+        
+        # Main text
+        text_surface = game.medium_font.render(point_text, True, color)
+        text_rect = text_surface.get_rect(center=(x, y))
+        text_surface.set_alpha(alpha)
+        game.screen.blit(text_surface, text_rect)
+
+
+def draw_combo_indicator(game):
+    """Draw combo streak indicator with pulsing effect"""
+    if game.combo_count <= 0:
+        return
+    
+    # Position at top right, next to timer
+    x = WINDOW_WIDTH - 100
+    y = 130
+    
+    combo_idx = min(game.combo_count, COMBO_MAX_LEVEL)
+    combo_color = COMBO_COLORS[combo_idx]
+    
+    # Create pulsing effect based on frame count
+    # Use game.seconds to create animation
+    pulse_scale = 1.0 + 0.1 * abs((game.seconds * 2) % 20 - 10) / 10
+    
+    # Draw combo text
+    combo_text = f"{game.combo_multiplier:.1f}x"
+    text_surface = game.large_font.render(combo_text, True, combo_color)
+    
+    # Apply pulse scale
+    original_size = text_surface.get_size()
+    scaled_size = (int(original_size[0] * pulse_scale), int(original_size[1] * pulse_scale))
+    text_surface = pygame.transform.scale(text_surface, scaled_size)
+    
+    text_rect = text_surface.get_rect(center=(x, y))
+    
+    # Draw glow effect
+    glow_surface = game.large_font.render(combo_text, True, (255, 255, 255))
+    glow_surface = pygame.transform.scale(glow_surface, (scaled_size[0] + 4, scaled_size[1] + 4))
+    glow_surface.set_alpha(100)
+    glow_rect = glow_surface.get_rect(center=(x, y))
+    game.screen.blit(glow_surface, glow_rect)
+    
+    # Draw main text
+    game.screen.blit(text_surface, text_rect)
+    
+    # Draw "COMBO!" label below
+    label_surface = game.small_font.render("COMBO!", True, combo_color)
+    label_rect = label_surface.get_rect(center=(x, y + 25))
+    game.screen.blit(label_surface, label_rect)

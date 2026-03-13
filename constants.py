@@ -92,3 +92,31 @@ MENU_BUTTON_HOVER_MEDIUM = (255, 195, 50)
 MENU_BUTTON_HOVER_HARD = (250, 80, 80)
 MENU_BUTTON_SECONDARY = (150, 150, 150)  # Gray for secondary buttons
 MENU_BUTTON_HOVER_SECONDARY = (180, 180, 180)
+
+# Enhanced Scoring System
+COMBO_MULTIPLIERS = [1.0, 1.5, 2.0, 2.5, 3.0]  # Multipliers for combo levels
+COMBO_MAX_LEVEL = len(COMBO_MULTIPLIERS) - 1
+COMBO_COLORS = [
+    (100, 200, 100),  # 1x - Green
+    (255, 215, 0),    # 1.5x - Gold
+    (255, 165, 0),    # 2x - Orange
+    (255, 100, 100),  # 2.5x - Red-Orange
+    (255, 50, 255)    # 3x - Magenta
+]
+
+# Visual Effect Settings
+FLOATING_TEXT_SPEED = 2  # Pixels per frame
+FLOATING_TEXT_DURATION = 45  # Frames (0.75 seconds at 60 FPS)
+FLASH_DURATION = 20  # Frames for cell flash effect
+FLASH_COLORS = {
+    'correct': (100, 255, 100),   # Bright green for correct placement
+    'auto_fill': (100, 200, 255),  # Blue for auto-filled cells
+    'combo': (255, 215, 0),        # Gold for combo multiplier
+}
+
+# Bonus Point Settings
+BONUS_ROW_COMPLETE = 50     # Bonus for completing a row
+BONUS_COL_COMPLETE = 50     # Bonus for completing a column
+BONUS_BOX_COMPLETE = 75     # Bonus for completing a box
+BONUS_NUMBER_COMPLETE = 100 # Bonus for placing all of one number
+COMBO_BONUS_BASE = 10       # Base bonus for maintaining combo
