@@ -579,10 +579,33 @@ class SudokuGame:
         if self.game_over:
             return
         
-        if key in range(pygame.K_1, pygame.K_9 + 1):
+        # Handle number input (1-9 and 0 for erase)
+        if key in range(pygame.K_0, pygame.K_9 + 1):
             self.place_number(key - pygame.K_0)
         elif key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
             self.place_number(0)
+        
+        # Handle arrow keys for cell navigation
+        elif key == pygame.K_UP:
+            self.move_selection(0, -1)
+        elif key == pygame.K_DOWN:
+            self.move_selection(0, 1)
+        elif key == pygame.K_LEFT:
+            self.move_selection(-1, 0)
+        elif key == pygame.K_RIGHT:
+            self.move_selection(1, 0)
+    
+    def move_selection(self, dx, dy):
+        """Move the selected cell by dx, dy"""
+        if self.selected_cell is None:
+            # Start at top-left if no cell selected
+            self.selected_cell = (0, 0)
+            return
+        
+        row, col = self.selected_cell
+        new_row = (row + dy) % 9
+        new_col = (col + dx) % 9
+        self.selected_cell = (new_row, new_col)
     
     def draw(self):
         """Draw the game screen"""
