@@ -65,6 +65,13 @@ class SudokuGame:
         self.message_timer = 0
         self.show_settings = False
         
+        # Animation state
+        self.animation_queue = []
+        self.current_animation_frame = 0
+        self.animation_speed = 10  # frames per cell
+        self.laser_particles = []
+        self.laser_source = None  # (row, col) of laser origin
+        
         # Difficulty settings
         self.difficulty_settings = {
             'easy': {'cells_to_remove': 30, 'lives': 3, 'points_per_cell': 5},
@@ -252,7 +259,7 @@ class SudokuGame:
     
     def auto_fill_singles(self):
         """Auto-fill cells that have only one possible value"""
-        filled_count = 0
+        filled_sequence = []
         changes_made = True
         
         # Keep looping until no more single-possibility cells are found
@@ -271,10 +278,11 @@ class SudokuGame:
                     if len(possible) == 1:
                         value = possible.pop()
                         self.board[i][j] = value
-                        filled_count += 1
+                        filled_sequence.append((i, j, value))
                         changes_made = True
         
         # Award partial points for auto-filled cells
+        filled_count = len(filled_sequence)
         if filled_count > 0:
             points_per_cell = self.difficulty_settings[self.difficulty]['points_per_cell']
             auto_points = (points_per_cell // 2) * filled_count
@@ -284,8 +292,80 @@ class SudokuGame:
                 self.show_message(f"+{auto_points} pts (1 auto-filled)", self.DARK_BLUE)
             else:
                 self.show_message(f"+{auto_points} pts ({filled_count} auto-filled)", self.DARK_BLUE)
+            
+            # Start animation
+            self.start_animation(filled_sequence)
         
         return filled_count
+    
+    def start_animation(self, filled_sequence):
+        """Initialize animation for auto-filled cells"""
+        if not filled_sequence:
+            return
+        
+        self.animation_queue = filled_sequence.copy()
+        self.current_animation_frame = 0
+        # Set laser source to the first filled cell
+        if len(filled_sequence) > 0:
+            self.laser_source = (filled_sequence[0][0], filled_sequence[0][1])
+    
+    def update_animation(self):
+        """Update animation state each frame"""
+        if not self.animation_queue:
+            return
+        
+        self.current_animation_frame += 1
+        
+        # Move to next cell in animation
+        if self.current_animation_frame >= self.animation_speed:
+            self.current_animation_frame = 0
+            if len(self.animation_queue) > 1:
+                # Set the next cell as the laser source
+                self.laser_source = (self.animation_queue[1][0], self.animation_queue[1][1])
+                self.animation_queue.pop(0)
+            else:
+                # Animation complete
+                self.animation_queue = []
+                self.laser_source = None
+    
+    def get_cell_center(self, row, col):
+        """Get the center coordinates of a cell"""
+        x = self.BOARD_X + col * self.CELL_SIZE + self.CELL_SIZE // 2
+        y = self.BOARD_Y + row * self.CELL_SIZE + self.CELL_SIZE // 2
+        return (x, y)
+    
+    def draw_laser_effect(self):
+        """Draw laser effect between animated cells"""
+        if len(self.animation_queue) < 2 or self.laser_source is None:
+            return
+        
+        # Get source and target cells
+        source_row, source_col = self.laser_source
+        target_row, target_col = self.animation_queue[1][0], self.animation_queue[1][1]
+        
+        # Get center points
+        source_pos = self.get_cell_center(source_row, source_col)
+        target_pos = self.get_cell_center(target_row, target_col)
+        
+        # Calculate animation progress (0 to 1)
+        progress = self.current_animation_frame / self.animation_speed
+        
+        # Interpolate laser position
+        laser_x = source_pos[0] + (target_pos[0] - source_pos[0]) * progress
+        laser_y = source_pos[1] + (target_pos[1] - source_pos[1]) * progress
+        
+        # Draw laser beam
+        laser_color = (100, 200, 255)  # Cyan/blue laser
+        glow_color = (150, 220, 255)
+        
+        # Draw glow effect (thicker, more transparent)
+        pygame.draw.line(self.screen, glow_color, source_pos, (laser_x, laser_y), 8)
+        # Draw main laser (thinner, brighter)
+        pygame.draw.line(self.screen, laser_color, source_pos, (laser_x, laser_y), 4)
+        
+        # Draw particles at laser tip
+        pygame.draw.circle(self.screen, self.WHITE, (int(laser_x), int(laser_y)), 6)
+        pygame.draw.circle(self.screen, laser_color, (int(laser_x), int(laser_y)), 4)
     
     def get_cell_from_pos(self, pos):
         """Get board cell coordinates from mouse position"""
@@ -492,6 +572,9 @@ class SudokuGame:
         """Draw the game screen"""
         self.screen.fill(self.WHITE)
         
+        # Update animation
+        self.update_animation()
+        
         # Title
         title_text = self.title_font.render("Sudoku Game", True, self.PURPLE)
         title_rect = title_text.get_rect(center=(self.WINDOW_WIDTH // 2, 40))
@@ -530,6 +613,9 @@ class SudokuGame:
         
         # Draw board
         self.draw_board()
+        
+        # Draw laser animation effect
+        self.draw_laser_effect()
         
         # Draw number buttons
         self.draw_number_buttons()
