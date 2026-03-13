@@ -79,3 +79,16 @@ FPS = 60
 # UI Enhancement settings
 MAX_UNDO_HISTORY = 50  # Maximum number of moves to track for undo
 GLOW_INTENSITY = 3  # Border width for selected cell glow
+
+# Main Menu settings
+MENU_BG = (245, 245, 250)  # Light background for menu
+MENU_TITLE_COLOR = PURPLE
+MENU_SUBTITLE_COLOR = (100, 100, 100)
+MENU_BUTTON_EASY = (100, 200, 100)  # Green for easy
+MENU_BUTTON_MEDIUM = (255, 165, 0)  # Orange for medium
+MENU_BUTTON_HARD = (220, 50, 50)  # Red for hard
+MENU_BUTTON_HOVER_EASY = (130, 230, 130)
+MENU_BUTTON_HOVER_MEDIUM = (255, 195, 50)
+MENU_BUTTON_HOVER_HARD = (250, 80, 80)
+MENU_BUTTON_SECONDARY = (150, 150, 150)  # Gray for secondary buttons
+MENU_BUTTON_HOVER_SECONDARY = (180, 180, 180)

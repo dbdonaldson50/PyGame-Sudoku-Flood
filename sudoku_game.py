@@ -16,7 +16,7 @@ sys.setrecursionlimit(10000)
 # Import game modules
 from constants import *
 import game_logic
-from ui_renderer import draw_game_screen
+from ui_renderer import draw_game_screen, draw_main_menu
 
 
 class SudokuGame:
@@ -88,7 +88,9 @@ class SudokuGame:
         self.message_color = self.BLACK
         self.message_timer = 0
         self.show_settings = False
+        self.show_instructions = False  # Show how to play instructions
         self.mouse_pos = (0, 0)  # Track mouse position for hover effects
+        self.game_state = 'menu'  # 'menu' or 'playing'
         
         # Animation state
         self.animation_queue = []
@@ -109,11 +111,44 @@ class SudokuGame:
         self.timer_event = pygame.USEREVENT + 1
         pygame.time.set_timer(self.timer_event, 1000)
         
-        # Start first game
-        self.new_game()
+        # Start in menu state (don't auto-start game)
+        # Game will start when user selects difficulty from menu
     
     def create_buttons(self):
         """Create button rectangles"""
+        # Main menu buttons
+        button_width = 300
+        button_height = 120
+        button_spacing = 30
+        start_y = 280
+        
+        center_x = self.WINDOW_WIDTH // 2
+        
+        self.buttons['menu_easy'] = pygame.Rect(center_x - button_width // 2, start_y, 
+                                                 button_width, button_height)
+        self.buttons['menu_medium'] = pygame.Rect(center_x - button_width // 2, 
+                                                   start_y + button_height + button_spacing,
+                                                   button_width, button_height)
+        self.buttons['menu_hard'] = pygame.Rect(center_x - button_width // 2, 
+                                                 start_y + (button_height + button_spacing) * 2,
+                                                 button_width, button_height)
+        
+        # How to Play button
+        howto_width = 200
+        howto_height = 50
+        self.buttons['menu_howtoplay'] = pygame.Rect(center_x - howto_width // 2,
+                                                      start_y + (button_height + button_spacing) * 3 + 20,
+                                                      howto_width, howto_height)
+        
+        # Instruction modal
+        modal_width = 600
+        modal_height = 500
+        modal_x = (self.WINDOW_WIDTH - modal_width) // 2
+        modal_y = (self.WINDOW_HEIGHT - modal_height) // 2
+        
+        self.buttons['instructions_modal'] = pygame.Rect(modal_x, modal_y, modal_width, modal_height)
+        self.buttons['instructions_close'] = pygame.Rect(modal_x + modal_width - 50, modal_y + 10, 40, 40)
+        
         # Control buttons (New Game, Hint, Undo, Settings) - fixed position
         button_width = 72
         button_height = 35
@@ -172,6 +207,12 @@ class SudokuGame:
         newgame_x = gameover_modal_x + (gameover_modal_width - newgame_width) // 2
         self.buttons['gameover_newgame'] = pygame.Rect(newgame_x, gameover_modal_y + 220, 
                                                         newgame_width, 45)
+        
+        # Return to Menu button in game over modal
+        menu_width = 140
+        menu_x = gameover_modal_x + (gameover_modal_width - menu_width) // 2
+        self.buttons['gameover_menu'] = pygame.Rect(menu_x, gameover_modal_y + 220 + 55, 
+                                                     menu_width, 45)
     
     def update_cell_font(self):
         """Update cell font size based on grid size"""
@@ -202,6 +243,7 @@ class SudokuGame:
         self.show_win_message = False
         self.show_lose_message = False
         self.show_settings = False  # FIX: Close settings modal when starting new game
+        self.game_state = 'playing'  # Set to playing state
         self.score = 0
         self.seconds = 0
         self.pencil_mode = False
@@ -529,6 +571,11 @@ class SudokuGame:
         self.message = f"Game Over!\nOut of lives\nFinal Score: {self.score}"
         self.message_color = self.DARK_RED
     
+    def start_game_with_difficulty(self, difficulty):
+        """Start a new game with specified difficulty"""
+        self.difficulty = difficulty
+        self.new_game()
+    
     def show_message(self, text, color):
         """Display a temporary message"""
         self.message = text
@@ -540,11 +587,38 @@ class SudokuGame:
         # Update mouse position for hover effects
         self.mouse_pos = pos
         
+        # Handle menu state
+        if self.game_state == 'menu':
+            # Check for instruction modal
+            if self.show_instructions:
+                if self.buttons['instructions_modal'].collidepoint(pos):
+                    if self.buttons['instructions_close'].collidepoint(pos):
+                        self.show_instructions = False
+                    return
+                else:
+                    self.show_instructions = False
+                    return
+            
+            # Check menu buttons
+            if self.buttons['menu_easy'].collidepoint(pos):
+                self.start_game_with_difficulty('easy')
+            elif self.buttons['menu_medium'].collidepoint(pos):
+                self.start_game_with_difficulty('medium')
+            elif self.buttons['menu_hard'].collidepoint(pos):
+                self.start_game_with_difficulty('hard')
+            elif self.buttons['menu_howtoplay'].collidepoint(pos):
+                self.show_instructions = True
+            return
+        
         # Handle game over modal
         if self.show_win_message or self.show_lose_message:
             if self.buttons['gameover_modal'].collidepoint(pos):
                 if self.buttons['gameover_newgame'].collidepoint(pos):
                     self.new_game()
+                elif self.buttons['gameover_menu'].collidepoint(pos):
+                    self.game_state = 'menu'
+                    self.show_win_message = False
+                    self.show_lose_message = False
                 return
             else:
                 # Click outside modal closes it
@@ -667,11 +741,14 @@ class SudokuGame:
     
     def draw(self):
         """Draw the game screen"""
-        # Update animation
-        self.update_animation()
-        
-        # Draw everything using the UI renderer
-        draw_game_screen(self)
+        if self.game_state == 'menu':
+            draw_main_menu(self)
+        else:
+            # Update animation
+            self.update_animation()
+            
+            # Draw everything using the UI renderer
+            draw_game_screen(self)
     
     def run(self):
         """Main game loop"""
@@ -686,9 +763,15 @@ class SudokuGame:
                 elif event.type == pygame.MOUSEMOTION:
                     self.mouse_pos = event.pos  # Track mouse position for hover effects
                 elif event.type == pygame.KEYDOWN:
-                    self.handle_key(event.key)
+                    # Only handle keyboard in playing state
+                    if self.game_state == 'playing':
+                        self.handle_key(event.key)
+                    # ESC to return to menu (only when not in game over state)
+                    elif event.key == pygame.K_ESCAPE and self.game_state == 'playing' and not self.game_over:
+                        self.game_state = 'menu'
                 elif event.type == self.timer_event:
-                    if not self.game_over:
+                    # Only update timer when playing and not game over
+                    if self.game_state == 'playing' and not self.game_over:
                         self.seconds += 1
             
             self.draw()

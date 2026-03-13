@@ -8,6 +8,143 @@ import pygame
 from constants import *
 
 
+def draw_main_menu(game):
+    """Draw the main menu screen"""
+    game.screen.fill(MENU_BG)
+    
+    # Draw title
+    title_text = game.title_font.render("Sudoku Game", True, MENU_TITLE_COLOR)
+    title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2, 120))
+    game.screen.blit(title_text, title_rect)
+    
+    # Draw subtitle
+    subtitle_text = game.medium_font.render("Choose Your Difficulty", True, MENU_SUBTITLE_COLOR)
+    subtitle_rect = subtitle_text.get_rect(center=(WINDOW_WIDTH // 2, 180))
+    game.screen.blit(subtitle_text, subtitle_rect)
+    
+    # Draw difficulty buttons with descriptions
+    difficulty_buttons = [
+        ('menu_easy', 'Easy', '9x9 Grid', '3 Lives', MENU_BUTTON_EASY, MENU_BUTTON_HOVER_EASY),
+        ('menu_medium', 'Medium', '16x16 Grid', '4 Lives', MENU_BUTTON_MEDIUM, MENU_BUTTON_HOVER_MEDIUM),
+        ('menu_hard', 'Hard', '25x25 Grid', '5 Lives', MENU_BUTTON_HARD, MENU_BUTTON_HOVER_HARD)
+    ]
+    
+    for key, title, grid_desc, lives_desc, color, hover_color in difficulty_buttons:
+        button = game.buttons[key]
+        is_hovering = button.collidepoint(game.mouse_pos)
+        button_color = hover_color if is_hovering else color
+        
+        # Draw button with shadow for depth
+        shadow_rect = button.copy()
+        shadow_rect.x += 4
+        shadow_rect.y += 4
+        pygame.draw.rect(game.screen, (100, 100, 100), shadow_rect, border_radius=12)
+        pygame.draw.rect(game.screen, button_color, button, border_radius=12)
+        pygame.draw.rect(game.screen, BLACK, button, 3, border_radius=12)
+        
+        # Draw title
+        title_surface = game.large_font.render(title, True, WHITE)
+        title_rect = title_surface.get_rect(center=(button.centerx, button.centery - 30))
+        game.screen.blit(title_surface, title_rect)
+        
+        # Draw grid size
+        grid_surface = game.medium_font.render(grid_desc, True, WHITE)
+        grid_rect = grid_surface.get_rect(center=(button.centerx, button.centery + 5))
+        game.screen.blit(grid_surface, grid_rect)
+        
+        # Draw lives count
+        lives_surface = game.small_font.render(lives_desc, True, WHITE)
+        lives_rect = lives_surface.get_rect(center=(button.centerx, button.centery + 35))
+        game.screen.blit(lives_surface, lives_rect)
+    
+    # Draw "How to Play" button
+    how_to_play_button = game.buttons['menu_howtoplay']
+    is_hovering = how_to_play_button.collidepoint(game.mouse_pos)
+    button_color = MENU_BUTTON_HOVER_SECONDARY if is_hovering else MENU_BUTTON_SECONDARY
+    
+    pygame.draw.rect(game.screen, button_color, how_to_play_button, border_radius=8)
+    pygame.draw.rect(game.screen, BLACK, how_to_play_button, 2, border_radius=8)
+    
+    howto_text = game.medium_font.render("How to Play", True, WHITE)
+    howto_rect = howto_text.get_rect(center=how_to_play_button.center)
+    game.screen.blit(howto_text, howto_rect)
+    
+    # Draw version/author info at bottom
+    version_text = game.small_font.render("v2.0 | Created by Red Donaldson", True, MENU_SUBTITLE_COLOR)
+    version_rect = version_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 30))
+    game.screen.blit(version_text, version_rect)
+    
+    # Draw instructions modal if open
+    if game.show_instructions:
+        draw_instructions_modal(game)
+    
+    pygame.display.flip()
+
+
+def draw_instructions_modal(game):
+    """Draw the how to play instructions modal"""
+    modal = game.buttons['instructions_modal']
+    
+    # Draw semi-transparent overlay
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.set_alpha(128)
+    overlay.fill(BLACK)
+    game.screen.blit(overlay, (0, 0))
+    
+    # Draw modal
+    pygame.draw.rect(game.screen, WHITE, modal, border_radius=10)
+    pygame.draw.rect(game.screen, BLACK, modal, 3, border_radius=10)
+    
+    # Title
+    title_text = game.large_font.render("How to Play", True, PURPLE)
+    title_rect = title_text.get_rect(center=(modal.centerx, modal.top + 40))
+    game.screen.blit(title_text, title_rect)
+    
+    # Instructions text
+    instructions = [
+        "Goal: Fill the entire grid with numbers/symbols",
+        "",
+        "Rules:",
+        "• Each row must contain all symbols once",
+        "• Each column must contain all symbols once",
+        "• Each box must contain all symbols once",
+        "",
+        "Controls:",
+        "• Click a cell to select it",
+        "• Type numbers/letters to fill cells",
+        "• Arrow keys to navigate",
+        "• P - Toggle Pencil/Pen mode",
+        "• Backspace/Delete - Clear cell",
+        "• Ctrl/Cmd+Z - Undo last move",
+        "• ESC - Return to menu",
+        "",
+        "Features:",
+        "• Auto-fill when only one option remains",
+        "• Pencil marks for noting possibilities",
+        "• Hints cost 10 points",
+    ]
+    
+    y_offset = modal.top + 90
+    for line in instructions:
+        if line:
+            text_surface = game.small_font.render(line, True, BLACK)
+            text_rect = text_surface.get_rect(left=modal.left + 30, top=y_offset)
+            game.screen.blit(text_surface, text_rect)
+        y_offset += 22
+    
+    # Close button
+    close_button = game.buttons['instructions_close']
+    is_hovering = close_button.collidepoint(game.mouse_pos)
+    close_color = HOVER_RED if is_hovering else DARK_RED
+    
+    pygame.draw.rect(game.screen, close_color, close_button, border_radius=5)
+    pygame.draw.rect(game.screen, BLACK, close_button, 2, border_radius=5)
+    
+    close_text = game.medium_font.render("X", True, WHITE)
+    close_rect = close_text.get_rect(center=close_button.center)
+    game.screen.blit(close_text, close_rect)
+
+
 def draw_game_screen(game):
     """Draw the complete game screen"""
     game.screen.fill(WHITE)
@@ -432,3 +569,15 @@ def draw_game_over_modal(game):
     newgame_text = game.small_font.render("New Game", True, WHITE)
     newgame_rect = newgame_text.get_rect(center=newgame_button.center)
     game.screen.blit(newgame_text, newgame_rect)
+    
+    # Return to Menu button
+    menu_button = game.buttons['gameover_menu']
+    is_menu_hovering = menu_button.collidepoint(game.mouse_pos)
+    menu_color = HOVER_PURPLE if is_menu_hovering else PURPLE
+    
+    pygame.draw.rect(game.screen, menu_color, menu_button)
+    pygame.draw.rect(game.screen, BLACK, menu_button, 2)
+    
+    menu_text = game.small_font.render("Main Menu", True, WHITE)
+    menu_rect = menu_text.get_rect(center=menu_button.center)
+    game.screen.blit(menu_text, menu_rect)
