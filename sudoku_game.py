@@ -224,6 +224,69 @@ class SudokuGame:
                 self.board[row][col] = 0
                 removed += 1
     
+    def get_possible_values(self, row, col):
+        """Get all possible values for a given cell"""
+        if self.board[row][col] != 0:
+            return set()
+        
+        possible = set(range(1, 10))
+        
+        # Remove values in same row
+        for c in range(9):
+            if self.board[row][c] != 0:
+                possible.discard(self.board[row][c])
+        
+        # Remove values in same column
+        for r in range(9):
+            if self.board[r][col] != 0:
+                possible.discard(self.board[r][col])
+        
+        # Remove values in same 3x3 box
+        box_row, box_col = 3 * (row // 3), 3 * (col // 3)
+        for i in range(box_row, box_row + 3):
+            for j in range(box_col, box_col + 3):
+                if self.board[i][j] != 0:
+                    possible.discard(self.board[i][j])
+        
+        return possible
+    
+    def auto_fill_singles(self):
+        """Auto-fill cells that have only one possible value"""
+        filled_count = 0
+        changes_made = True
+        
+        # Keep looping until no more single-possibility cells are found
+        while changes_made:
+            changes_made = False
+            
+            for i in range(9):
+                for j in range(9):
+                    # Skip cells that are already filled or initially given
+                    if self.board[i][j] != 0 or self.initial_board[i][j] != 0:
+                        continue
+                    
+                    possible = self.get_possible_values(i, j)
+                    
+                    # If only one possibility, fill it in
+                    if len(possible) == 1:
+                        value = possible.pop()
+                        self.board[i][j] = value
+                        filled_count += 1
+                        changes_made = True
+        
+        # Award partial points for auto-filled cells
+        if filled_count > 0:
+            points_per_cell = self.difficulty_settings[self.difficulty]['points_per_cell']
+            auto_points = (points_per_cell // 2) * filled_count
+            self.score += auto_points
+            
+            if filled_count == 1:
+                self.show_message(f"+{auto_points} pts (1 auto-filled)", self.DARK_BLUE)
+            else:
+                self.show_message(f"+{auto_points} pts ({filled_count} auto-filled)", self.DARK_BLUE)
+        
+        return filled_count
+    
     def get_cell_from_pos(self, pos):
         """Get board cell coordinates from mouse position"""
         x, y = pos
@@ -257,7 +320,13 @@ class SudokuGame:
             self.board[row][col] = number
             points = self.difficulty_settings[self.difficulty]['points_per_cell']
             self.score += points
-            self.show_message(f"Correct! +{points} points", self.DARK_GREEN)
+            
+            # Auto-fill cells with only one possibility
+            auto_filled = self.auto_fill_singles()
+            
+            # Show message about placement (auto-fill message will override if any were filled)
+            if auto_filled == 0:
+                self.show_message(f"Correct! +{points} points", self.DARK_GREEN)
             
             # Check if puzzle complete
             if self.is_puzzle_complete():
@@ -295,7 +364,13 @@ class SudokuGame:
             if empty_cells:
                 row, col = random.choice(empty_cells)
                 self.board[row][col] = self.solution[row][col]
-                self.show_message("Hint given! -10 points", self.DARK_BLUE)
+                
+                # Auto-fill cells with only one possibility after hint
+                auto_filled = self.auto_fill_singles()
+                
+                # Show message (auto-fill message will override if any were filled)
+                if auto_filled == 0:
+                    self.show_message("Hint given! -10 points", self.DARK_BLUE)
                 
                 if self.is_puzzle_complete():
                     self.win_game()
