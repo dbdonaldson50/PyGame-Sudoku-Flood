@@ -54,19 +54,29 @@ sudoku-game/
 │   ├── game_logic.py        # Puzzle generation and validation
 │   └── ui_renderer.py       # UI rendering functions
 │
-├── tests/                    # Test suite
+├── tests/                    # Test suite (134 tests, 75% coverage)
+│   ├── TestResults/         # Test outputs and coverage reports
+│   │   ├── htmlcov/        # HTML coverage report (generated)
+│   │   ├── coverage_report.txt
+│   │   ├── test_output.txt
+│   │   └── final_coverage.txt
 │   ├── conftest.py          # Pytest configuration
-│   ├── test_game_logic.py   # Game logic tests (50+ tests)
-│   ├── test_constants.py    # Constants validation tests
+│   ├── test_game_logic.py   # Game logic tests (85 tests)
+│   ├── test_constants.py    # Constants validation tests (22 tests)
+│   ├── test_sudoku_game.py  # Main game tests (76 tests)
 │   └── performance_test.py  # Performance benchmarks
 │
 ├── docs/                     # Documentation
-│   ├── IMPLEMENTATION_REPORT.md
-│   ├── MAIN_MENU_REPORT.md
-│   ├── OPTIMIZATIONS.md
-│   ├── PERFORMANCE_REPORT.md
-│   ├── README_TESTS.md
-│   └── TEST_SUMMARY.md
+│   ├── IMPLEMENTATION_REPORT.md      # Test suite implementation details
+│   ├── MAIN_MENU_REPORT.md          # Main menu feature documentation
+│   ├── OPTIMIZATIONS.md             # Performance optimization details
+│   ├── PERFORMANCE_REPORT.md        # 25x25 grid optimization results
+│   ├── README_TESTS.md              # Testing guide
+│   ├── TEST_SUMMARY.md              # Quick test reference
+│   ├── SCORING_ENHANCEMENT_REPORT.md # Combo system documentation
+│   ├── TEST_COVERAGE_REPORT.md      # Coverage analysis
+│   ├── TEST_GUIDE.md                # Quick testing guide
+│   └── QUICK_SUMMARY.md             # Executive summary
 │
 ├── requirements.txt          # Python dependencies
 ├── pytest.ini               # Pytest configuration
