@@ -37,18 +37,18 @@ class SudokuGame:
         
         # Try to load Ubuntu Mono font, fallback to monospace
         try:
-            self.title_font = pygame.font.SysFont('ubuntumono', 42, bold=True)
-            self.large_font = pygame.font.SysFont('ubuntumono', 32)
-            self.medium_font = pygame.font.SysFont('ubuntumono', 24)
-            self.small_font = pygame.font.SysFont('ubuntumono', 20)
-            self.button_font = pygame.font.SysFont('ubuntumono', 18)
+            self.title_font = pygame.font.SysFont('ubuntumono', 52, bold=True)
+            self.large_font = pygame.font.SysFont('ubuntumono', 38)
+            self.medium_font = pygame.font.SysFont('ubuntumono', 28)
+            self.small_font = pygame.font.SysFont('ubuntumono', 22)
+            self.button_font = pygame.font.SysFont('ubuntumono', 20)
         except:
             # Fallback to monospace
-            self.title_font = pygame.font.SysFont('monospace', 42, bold=True)
-            self.large_font = pygame.font.SysFont('monospace', 32)
-            self.medium_font = pygame.font.SysFont('monospace', 24)
-            self.small_font = pygame.font.SysFont('monospace', 20)
-            self.button_font = pygame.font.SysFont('monospace', 18)
+            self.title_font = pygame.font.SysFont('monospace', 52, bold=True)
+            self.large_font = pygame.font.SysFont('monospace', 38)
+            self.medium_font = pygame.font.SysFont('monospace', 28)
+            self.small_font = pygame.font.SysFont('monospace', 22)
+            self.button_font = pygame.font.SysFont('monospace', 20)
         
         # Board settings (will be updated per difficulty)
         self.BOARD_SIZE = 600
@@ -177,11 +177,11 @@ class SudokuGame:
     def update_cell_font(self):
         """Update cell font based on grid size"""
         if self.grid_size == 9:
-            font_size = 36
+            font_size = 40
         elif self.grid_size == 16:
-            font_size = 24
+            font_size = 28
         else:  # 25x25
-            font_size = 18
+            font_size = 20
         
         try:
             self.cell_font = pygame.font.SysFont('ubuntumono', font_size, bold=True)
@@ -643,11 +643,17 @@ class SudokuGame:
                 if self.buttons['settings_close'].collidepoint(pos):
                     self.show_settings = False
                 elif self.buttons['easy'].collidepoint(pos):
-                    self.difficulty = 'easy'
+                    if self.difficulty != 'easy':
+                        self.difficulty = 'easy'
+                        self.new_game()
                 elif self.buttons['medium'].collidepoint(pos):
-                    self.difficulty = 'medium'
+                    if self.difficulty != 'medium':
+                        self.difficulty = 'medium'
+                        self.new_game()
                 elif self.buttons['hard'].collidepoint(pos):
-                    self.difficulty = 'hard'
+                    if self.difficulty != 'hard':
+                        self.difficulty = 'hard'
+                        self.new_game()
                 elif self.buttons['check'].collidepoint(pos):
                     self.check_solution()
                 return
