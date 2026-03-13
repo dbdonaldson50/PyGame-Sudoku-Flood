@@ -21,6 +21,12 @@ def draw_game_screen(game):
     # Draw temporary messages
     draw_temporary_message(game)
     
+    # Draw pencil mode indicator
+    draw_pencil_mode_indicator(game)
+    
+    # Draw remaining numbers count
+    draw_remaining_numbers(game)
+    
     # Draw board
     draw_board(game)
     
@@ -29,9 +35,6 @@ def draw_game_screen(game):
     
     # Draw control buttons
     draw_control_buttons(game)
-    
-    # Draw pencil mode indicator
-    draw_pencil_mode_indicator(game)
     
     # Draw settings modal if open
     if game.show_settings:
@@ -87,6 +90,12 @@ def draw_board(game):
     """Draw the Sudoku board"""
     cell_size = game.BOARD_SIZE // game.grid_size
     
+    # Get selected cell value for highlighting
+    selected_value = None
+    if game.selected_cell:
+        row, col = game.selected_cell
+        selected_value = game.board[row][col]
+    
     for i in range(game.grid_size):
         for j in range(game.grid_size):
             x = game.BOARD_X + j * cell_size
@@ -97,6 +106,9 @@ def draw_board(game):
                 color = BLUE
             elif game.initial_board[i][j] is not None:
                 color = LIGHT_GRAY
+            elif selected_value and game.board[i][j] == selected_value and selected_value is not None:
+                # Highlight cells with same number as selected
+                color = HIGHLIGHT_NUMBER
             elif game.board[i][j] is not None and game.board[i][j] == game.solution[i][j]:
                 color = GREEN
             else:
@@ -104,6 +116,12 @@ def draw_board(game):
             
             pygame.draw.rect(game.screen, color, (x, y, cell_size, cell_size))
             pygame.draw.rect(game.screen, GRAY, (x, y, cell_size, cell_size), 1)
+            
+            # Draw enhanced glow for selected cell
+            if game.selected_cell == (i, j):
+                for thickness in range(GLOW_INTENSITY, 0, -1):
+                    alpha_color = SELECTED_GLOW
+                    pygame.draw.rect(game.screen, alpha_color, (x, y, cell_size, cell_size), thickness)
             
             # Draw number, pencil marks, or nothing
             if game.board[i][j] is not None:
@@ -190,6 +208,46 @@ def draw_pencil_mode_indicator(game):
     game.screen.blit(text, text_rect)
 
 
+def draw_remaining_numbers(game):
+    """Draw remaining numbers count for each symbol"""
+    # Calculate remaining count for each symbol
+    remaining = {}
+    for symbol in game.symbols:
+        total_needed = game.grid_size
+        placed = sum(1 for i in range(game.grid_size) for j in range(game.grid_size) 
+                     if game.solution[i][j] == symbol and game.board[i][j] == symbol)
+        remaining[symbol] = total_needed - placed
+    
+    # Draw title
+    title_text = game.small_font.render("Remaining:", True, BLACK)
+    title_rect = title_text.get_rect(left=80, top=135)
+    game.screen.blit(title_text, title_rect)
+    
+    # Draw counts in compact format
+    y_pos = 155
+    x_pos = 80
+    items_per_row = 9 if game.grid_size == 9 else (8 if game.grid_size == 16 else 13)
+    spacing = 25 if game.grid_size == 9 else (23 if game.grid_size == 16 else 15)
+    
+    for idx, symbol in enumerate(game.symbols):
+        count = remaining[symbol]
+        
+        # Color code: gray if complete, black otherwise
+        color = GRAY if count == 0 else BLACK
+        
+        # Format as "1:5" (symbol:count)
+        count_text = game.small_font.render(f"{symbol}:{count}", True, color)
+        count_rect = count_text.get_rect(left=x_pos, top=y_pos)
+        game.screen.blit(count_text, count_rect)
+        
+        # Move to next position
+        x_pos += spacing
+        if (idx + 1) % items_per_row == 0:
+            x_pos = 80
+            y_pos += 20
+
+
+
 def draw_laser_effect(game):
     """Draw laser effect between animated cells"""
     if not game.animation_queue or game.laser_source is None:
@@ -225,16 +283,22 @@ def get_cell_center(game, row, col):
 
 
 def draw_control_buttons(game):
-    """Draw control buttons"""
+    """Draw control buttons with hover effects"""
     button_data = [
-        ('new_game', 'New Game', DARK_BLUE),
-        ('hint', 'Hint', DARK_GREEN),
-        ('settings', 'Settings', PURPLE)
+        ('new_game', 'New', DARK_BLUE, HOVER_BLUE),
+        ('hint', 'Hint', DARK_GREEN, HOVER_GREEN),
+        ('undo', 'Undo', UNDO_COLOR, (180, 180, 180)),
+        ('settings', 'Settings', PURPLE, HOVER_PURPLE)
     ]
     
-    for key, text, color in button_data:
+    for key, text, color, hover_color in button_data:
         rect = game.buttons[key]
-        pygame.draw.rect(game.screen, color, rect)
+        
+        # Check if mouse is hovering over button
+        is_hovering = rect.collidepoint(game.mouse_pos)
+        button_color = hover_color if is_hovering else color
+        
+        pygame.draw.rect(game.screen, button_color, rect)
         pygame.draw.rect(game.screen, BLACK, rect, 2)
         
         text_surface = game.button_font.render(text, True, WHITE)
@@ -272,19 +336,29 @@ def draw_settings_modal(game):
     
     for i, (diff, label) in enumerate(zip(difficulties, labels)):
         button = game.buttons[diff]
-        color = DARK_GREEN if game.difficulty == diff else GRAY
+        is_hovering = button.collidepoint(game.mouse_pos)
+        
+        # Determine button color
+        if game.difficulty == diff:
+            color = HOVER_GREEN if is_hovering else DARK_GREEN
+        else:
+            color = LIGHT_GRAY if is_hovering else GRAY
         
         pygame.draw.rect(game.screen, color, button)
         pygame.draw.rect(game.screen, BLACK, button, 2)
         
         # Use smaller font for button text
-        text_surface = game.small_font.render(label, True, WHITE if game.difficulty == diff else BLACK)
+        text_color = WHITE if game.difficulty == diff else BLACK
+        text_surface = game.small_font.render(label, True, text_color)
         text_rect = text_surface.get_rect(center=button.center)
         game.screen.blit(text_surface, text_rect)
     
     # Check button
     check_button = game.buttons['check']
-    pygame.draw.rect(game.screen, DARK_BLUE, check_button)
+    is_check_hovering = check_button.collidepoint(game.mouse_pos)
+    check_color = HOVER_BLUE if is_check_hovering else DARK_BLUE
+    
+    pygame.draw.rect(game.screen, check_color, check_button)
     pygame.draw.rect(game.screen, BLACK, check_button, 2)
     
     check_text = game.button_font.render("Check Solution", True, WHITE)
@@ -293,7 +367,10 @@ def draw_settings_modal(game):
     
     # Close button
     close_button = game.buttons['settings_close']
-    pygame.draw.rect(game.screen, DARK_RED, close_button)
+    is_close_hovering = close_button.collidepoint(game.mouse_pos)
+    close_color = HOVER_RED if is_close_hovering else DARK_RED
+    
+    pygame.draw.rect(game.screen, close_color, close_button)
     pygame.draw.rect(game.screen, BLACK, close_button, 2)
     
     close_text = game.medium_font.render("X", True, WHITE)
@@ -346,7 +423,10 @@ def draw_game_over_modal(game):
     
     # New game button
     newgame_button = game.buttons['gameover_newgame']
-    pygame.draw.rect(game.screen, DARK_GREEN, newgame_button)
+    is_hovering = newgame_button.collidepoint(game.mouse_pos)
+    button_color = HOVER_GREEN if is_hovering else DARK_GREEN
+    
+    pygame.draw.rect(game.screen, button_color, newgame_button)
     pygame.draw.rect(game.screen, BLACK, newgame_button, 2)
     
     newgame_text = game.button_font.render("New Game", True, WHITE)
