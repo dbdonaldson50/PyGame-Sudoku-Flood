@@ -172,13 +172,17 @@ class SudokuGame:
         """Update cell font size based on grid size"""
         if self.grid_size == 9:
             font_size = 40
-            pencil_size = 14
         elif self.grid_size == 16:
             font_size = 28
-            pencil_size = 10
         else:  # 25
             font_size = 20
-            pencil_size = 8
+        
+        # Calculate pencil mark size based on cell size
+        # Each pencil mark occupies 1/box_size of the cell dimension
+        # Font should be ~65-70% of that slot to leave spacing
+        cell_size = self.BOARD_SIZE // self.grid_size
+        pencil_slot_size = cell_size / self.box_size
+        pencil_size = int(pencil_slot_size * 0.68)  # 68% of slot size for spacing
         
         try:
             self.cell_font = pygame.font.SysFont(FONT_NAME, font_size, bold=True)
