@@ -10,6 +10,9 @@ import random
 import copy
 import sys
 
+# Increase recursion limit for large grid generation
+sys.setrecursionlimit(10000)
+
 
 class SudokuGame:
     def __init__(self):
@@ -51,7 +54,7 @@ class SudokuGame:
             self.button_font = pygame.font.SysFont('monospace', 20)
         
         # Board settings (will be updated per difficulty)
-        self.BOARD_SIZE = 600
+        self.BOARD_SIZE = 720  # Divisible by 9, 16, and 25
         self.BOARD_X = (self.WINDOW_WIDTH - self.BOARD_SIZE) // 2
         self.BOARD_Y = 180
         
@@ -204,6 +207,19 @@ class SudokuGame:
         self.symbols = settings['symbols']
         self.max_lives = settings['lives']
         self.lives = self.max_lives
+        
+        # Update board size to ensure cells divide evenly
+        if self.grid_size == 9:
+            self.BOARD_SIZE = 720  # 720/9 = 80px per cell
+        elif self.grid_size == 16:
+            self.BOARD_SIZE = 720  # 720/16 = 45px per cell
+        else:  # 25
+            self.BOARD_SIZE = 700  # 700/25 = 28px per cell
+        
+        self.BOARD_X = (self.WINDOW_WIDTH - self.BOARD_SIZE) // 2
+        
+        # Update button positions based on new board size
+        self.create_buttons()
         
         # Update cell font
         self.update_cell_font()
