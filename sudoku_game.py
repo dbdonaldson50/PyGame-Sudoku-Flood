@@ -124,13 +124,14 @@ class SudokuGame:
         modal_y = (self.WINDOW_HEIGHT - modal_height) // 2
         
         buttons['settings_modal'] = pygame.Rect(modal_x, modal_y, modal_width, modal_height)
-        buttons['settings_close'] = pygame.Rect(modal_x + modal_width - 35, modal_y + 5, 30, 30)
+        buttons['settings_close'] = pygame.Rect(modal_x + modal_width - 40, modal_y + 10, 30, 30)
         
-        # Difficulty buttons in settings
-        diff_y = modal_y + 100
+        # Difficulty buttons in settings - centered within modal
+        diff_y = modal_y + 110
         diff_width = 100
         diff_spacing = 20
-        diff_start_x = (self.WINDOW_WIDTH - (diff_width * 3 + diff_spacing * 2)) // 2
+        diff_total_width = diff_width * 3 + diff_spacing * 2
+        diff_start_x = modal_x + (modal_width - diff_total_width) // 2
         
         buttons['easy'] = pygame.Rect(diff_start_x, diff_y, diff_width, 35)
         buttons['medium'] = pygame.Rect(diff_start_x + diff_width + diff_spacing, 
@@ -138,8 +139,10 @@ class SudokuGame:
         buttons['hard'] = pygame.Rect(diff_start_x + (diff_width + diff_spacing) * 2, 
                                       diff_y, diff_width, 35)
         
-        # Check button in settings
-        buttons['check'] = pygame.Rect(diff_start_x + diff_width, diff_y + 60, diff_width, 40)
+        # Check button in settings - centered within modal
+        check_width = 140
+        check_x = modal_x + (modal_width - check_width) // 2
+        buttons['check'] = pygame.Rect(check_x, diff_y + 70, check_width, 40)
         
         return buttons
     
@@ -526,7 +529,7 @@ class SudokuGame:
         pygame.draw.rect(self.screen, self.DARK_RED, btn, border_radius=8)
         pygame.draw.rect(self.screen, self.BLACK, btn, 2, border_radius=8)
         
-        text = self.medium_font.render("✖", True, self.WHITE)
+        text = self.medium_font.render("X", True, self.WHITE)
         text_rect = text.get_rect(center=btn.center)
         self.screen.blit(text, text_rect)
     
@@ -563,18 +566,18 @@ class SudokuGame:
         # Draw close button
         close_btn = self.buttons['settings_close']
         pygame.draw.rect(self.screen, self.DARK_RED, close_btn, border_radius=5)
-        close_text = self.small_font.render('✖', True, self.WHITE)
+        close_text = self.medium_font.render('X', True, self.WHITE)
         close_rect = close_text.get_rect(center=close_btn.center)
         self.screen.blit(close_text, close_rect)
         
         # Title
         title = self.large_font.render('Settings', True, self.PURPLE)
-        title_rect = title.get_rect(center=(self.WINDOW_WIDTH // 2, modal.top + 40))
+        title_rect = title.get_rect(center=(modal.centerx, modal.top + 40))
         self.screen.blit(title, title_rect)
         
         # Difficulty label
         diff_label = self.medium_font.render('Difficulty:', True, self.BLACK)
-        diff_label_rect = diff_label.get_rect(center=(self.WINDOW_WIDTH // 2, modal.top + 80))
+        diff_label_rect = diff_label.get_rect(center=(modal.centerx, modal.top + 85))
         self.screen.blit(diff_label, diff_label_rect)
         
         # Difficulty buttons
@@ -600,13 +603,13 @@ class SudokuGame:
         check_btn = self.buttons['check']
         pygame.draw.rect(self.screen, self.DARK_BLUE, check_btn, border_radius=8)
         pygame.draw.rect(self.screen, self.BLACK, check_btn, 2, border_radius=8)
-        check_text = self.small_font.render('Check Solution', True, self.WHITE)
+        check_text = self.small_font.render('Check', True, self.WHITE)
         check_text_rect = check_text.get_rect(center=check_btn.center)
         self.screen.blit(check_text, check_text_rect)
         
         # Info text
         info_text = self.small_font.render('Click outside to close', True, self.GRAY)
-        info_rect = info_text.get_rect(center=(self.WINDOW_WIDTH // 2, modal.bottom - 30))
+        info_rect = info_text.get_rect(center=(modal.centerx, modal.bottom - 30))
         self.screen.blit(info_text, info_rect)
     
     def run(self):
