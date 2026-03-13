@@ -67,16 +67,18 @@ class SudokuGame:
         self.board = []
         self.solution = []
         self.initial_board = []
+        self.pencil_marks = []  # 2D array of sets for pencil marks
         self.lives = 3
         self.max_lives = 3
         self.score = 0
         self.selected_cell = None
-        self.cell_input_buffer = ""
+        self.pencil_mode = False  # Toggle for pencil vs pen mode
         self.difficulty = 'easy'
         self.grid_size = 9
         self.box_size = 3
         self.symbols = []
         self.cell_font = None
+        self.pencil_font = None  # Smaller font for pencil marks
         self.seconds = 0
         self.game_over = False
         self.show_win_message = False
@@ -124,11 +126,6 @@ class SudokuGame:
         self.buttons['settings'] = pygame.Rect(start_x + (button_width + spacing) * 2, button_y, 
                                        button_width, button_height)
         
-        # Cell confirm/clear buttons (for 16x16 and 25x25) - fixed position
-        confirm_y = 905  # 5px below max board
-        self.buttons['confirm'] = pygame.Rect((self.WINDOW_WIDTH - 180) // 2, confirm_y, 85, 35)
-        self.buttons['clear_cell'] = pygame.Rect((self.WINDOW_WIDTH + 10) // 2, confirm_y, 85, 35)
-        
         # Settings modal buttons
         modal_width = 400
         modal_height = 300
@@ -175,15 +172,20 @@ class SudokuGame:
         """Update cell font size based on grid size"""
         if self.grid_size == 9:
             font_size = 40
+            pencil_size = 14
         elif self.grid_size == 16:
             font_size = 28
+            pencil_size = 10
         else:  # 25
             font_size = 20
+            pencil_size = 8
         
         try:
             self.cell_font = pygame.font.SysFont(FONT_NAME, font_size, bold=True)
+            self.pencil_font = pygame.font.SysFont(FONT_NAME, pencil_size)
         except:
             self.cell_font = pygame.font.SysFont(FONT_FALLBACK, font_size, bold=True)
+            self.pencil_font = pygame.font.SysFont(FONT_FALLBACK, pencil_size)
     
     def new_game(self):
         """Start a new game"""
@@ -193,7 +195,7 @@ class SudokuGame:
         self.show_settings = False  # FIX: Close settings modal when starting new game
         self.score = 0
         self.seconds = 0
-        self.cell_input_buffer = ""
+        self.pencil_mode = False
         
         # Update grid settings based on difficulty
         settings = self.difficulty_settings[self.difficulty]
@@ -225,6 +227,9 @@ class SudokuGame:
             self.board, self.grid_size, settings['cells_to_remove']
         )
         self.initial_board = copy.deepcopy(self.board)
+        
+        # Initialize pencil marks (empty sets for each cell)
+        self.pencil_marks = [[set() for _ in range(self.grid_size)] for _ in range(self.grid_size)]
         
         self.selected_cell = None
         self.show_message("New game started! Good luck!", self.DARK_BLUE)
@@ -284,6 +289,7 @@ class SudokuGame:
             if self.animation_queue:
                 row, col, value = self.animation_queue[0]
                 self.board[row][col] = value
+                self.pencil_marks[row][col].clear()  # Clear pencil marks when auto-filling
                 
                 self.laser_source = (row, col)
                 self.animation_queue.pop(0)
@@ -310,12 +316,8 @@ class SudokuGame:
         return (row, col)
     
     def place_number(self, symbol):
-        """Place a number in the selected cell (for 9x9 only)"""
+        """Place a number in the selected cell or add pencil mark"""
         if self.game_over or self.selected_cell is None:
-            return
-        
-        # Only direct placement for 9x9
-        if self.grid_size != 9:
             return
         
         row, col = self.selected_cell
@@ -323,20 +325,35 @@ class SudokuGame:
         if self.initial_board[row][col] is not None:
             return
         
-        # Erase
-        if symbol == '0' or symbol == 0:
-            self.board[row][col] = None
+        # Convert number to string symbol if needed
+        if isinstance(symbol, int):
+            if symbol == 0:
+                # Erase - clear both board and pencil marks
+                self.board[row][col] = None
+                self.pencil_marks[row][col].clear()
+                return
+            # Convert to appropriate symbol
+            if self.grid_size == 9 and 1 <= symbol <= 9:
+                symbol = str(symbol)
+            elif self.grid_size == 16 and 0 <= symbol <= 9:
+                symbol = str(symbol)
+            elif self.grid_size >= 16:
+                return  # Invalid for larger grids
+        
+        # Pencil mode - add/remove from pencil marks
+        if self.pencil_mode:
+            if symbol in self.pencil_marks[row][col]:
+                self.pencil_marks[row][col].remove(symbol)
+            else:
+                self.pencil_marks[row][col].add(symbol)
             return
         
-        # Convert number to string symbol
-        if isinstance(symbol, int) and 1 <= symbol <= 9:
-            symbol = str(symbol)
-        
-        # Check if correct
+        # Pen mode - place the number
         is_correct = self.solution[row][col] == symbol
         
         if is_correct:
             self.board[row][col] = symbol
+            self.pencil_marks[row][col].clear()  # Clear pencil marks when placing
             points = self.difficulty_settings[self.difficulty]['points_per_cell']
             self.score += points
             
@@ -355,68 +372,53 @@ class SudokuGame:
                 self.lose_game()
     
     def handle_cell_input(self, char):
-        """Handle character input for multi-character cells (16x16, 25x25)"""
+        """Handle character input for all grid sizes"""
         if self.game_over or self.selected_cell is None:
             return
         
-        if self.grid_size == 9:
-            return
-        
         row, col = self.selected_cell
         
         if self.initial_board[row][col] is not None:
             return
         
-        # Add character to buffer
+        # Convert to uppercase and check if valid symbol
         char = char.upper()
         if char in self.symbols:
-            self.cell_input_buffer = char
+            # Pencil mode - add/remove from pencil marks
+            if self.pencil_mode:
+                if char in self.pencil_marks[row][col]:
+                    self.pencil_marks[row][col].remove(char)
+                else:
+                    self.pencil_marks[row][col].add(char)
+            else:
+                # Pen mode - place the value
+                is_correct = self.solution[row][col] == char
+                
+                if is_correct:
+                    self.board[row][col] = char
+                    self.pencil_marks[row][col].clear()  # Clear pencil marks
+                    points = self.difficulty_settings[self.difficulty]['points_per_cell']
+                    self.score += points
+                    
+                    auto_filled = self.auto_fill_singles(source_cell=(row, col))
+                    
+                    if auto_filled == 0:
+                        self.show_message(f"Correct! +{points} points", self.DARK_GREEN)
+                    
+                    if game_logic.is_puzzle_complete(self.board, self.solution, self.grid_size):
+                        self.win_game()
+                else:
+                    self.lives -= 1
+                    self.show_message("Wrong! -1 life", self.DARK_RED)
+                    
+                    if self.lives <= 0:
+                        self.lose_game()
     
-    def confirm_cell_input(self):
-        """Confirm the cell input for multi-character grids"""
-        if self.game_over or self.selected_cell is None or not self.cell_input_buffer:
-            return
-        
-        if self.grid_size == 9:
-            return
-        
-        row, col = self.selected_cell
-        
-        if self.initial_board[row][col] is not None:
-            return
-        
-        symbol = self.cell_input_buffer
-        is_correct = self.solution[row][col] == symbol
-        
-        if is_correct:
-            self.board[row][col] = symbol
-            points = self.difficulty_settings[self.difficulty]['points_per_cell']
-            self.score += points
-            
-            auto_filled = self.auto_fill_singles(source_cell=(row, col))
-            
-            if auto_filled == 0:
-                self.show_message(f"Correct! +{points} points", self.DARK_GREEN)
-            
-            if game_logic.is_puzzle_complete(self.board, self.solution, self.grid_size):
-                self.win_game()
-        else:
-            self.lives -= 1
-            self.show_message("Wrong! -1 life", self.DARK_RED)
-            
-            if self.lives <= 0:
-                self.lose_game()
-        
-        self.cell_input_buffer = ""
-    
-    def clear_cell_input(self):
-        """Clear the cell input buffer"""
-        if self.grid_size == 9:
-            # For 9x9, clear the cell
-            if self.selected_cell and self.initial_board[self.selected_cell[0]][self.selected_cell[1]] is None:
-                self.board[self.selected_cell[0]][self.selected_cell[1]] = None
-        else:
-            self.cell_input_buffer = ""
+    def toggle_pencil_mode(self):
+        """Toggle between pencil and pen mode"""
+        self.pencil_mode = not self.pencil_mode
+        mode = "Pencil" if self.pencil_mode else "Pen"
+        self.show_message(f"{mode} mode", self.DARK_BLUE)
     
     def give_hint(self):
         """Give a hint by revealing one cell"""
@@ -435,6 +437,7 @@ class SudokuGame:
             if empty_cells:
                 row, col = random.choice(empty_cells)
                 self.board[row][col] = self.solution[row][col]
+                self.pencil_marks[row][col].clear()  # Clear pencil marks when placing hint
                 
                 auto_filled = self.auto_fill_singles(source_cell=(row, col))
                 
@@ -530,8 +533,6 @@ class SudokuGame:
             row, col = cell
             if self.initial_board[row][col] is None:
                 self.selected_cell = cell
-                if self.grid_size != 9:
-                    self.cell_input_buffer = ""
             return
         
         # Check buttons
@@ -541,56 +542,50 @@ class SudokuGame:
             self.give_hint()
         elif self.buttons['settings'].collidepoint(pos):
             self.show_settings = True
-        elif self.grid_size != 9:
-            # Confirm/Clear buttons for larger grids
-            if self.buttons['confirm'].collidepoint(pos):
-                self.confirm_cell_input()
-            elif self.buttons['clear_cell'].collidepoint(pos):
-                self.clear_cell_input()
     
     def handle_key(self, key):
         """Handle keyboard events"""
         if self.game_over:
             return
         
-        if self.grid_size == 9:
-            # Handle number input for 9x9
-            if key in range(pygame.K_0, pygame.K_9 + 1):
+        # Toggle pencil mode with 'P' key
+        if key == pygame.K_p:
+            self.toggle_pencil_mode()
+            return
+        
+        # Handle number input for all grid sizes
+        if key in range(pygame.K_0, pygame.K_9 + 1):
+            if self.grid_size == 9:
                 self.place_number(key - pygame.K_0)
-            elif key == pygame.K_KP0:
-                self.place_number(0)
-            elif key == pygame.K_KP1:
-                self.place_number(1)
-            elif key == pygame.K_KP2:
-                self.place_number(2)
-            elif key == pygame.K_KP3:
-                self.place_number(3)
-            elif key == pygame.K_KP4:
-                self.place_number(4)
-            elif key == pygame.K_KP5:
-                self.place_number(5)
-            elif key == pygame.K_KP6:
-                self.place_number(6)
-            elif key == pygame.K_KP7:
-                self.place_number(7)
-            elif key == pygame.K_KP8:
-                self.place_number(8)
-            elif key == pygame.K_KP9:
-                self.place_number(9)
-            elif key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
-                self.place_number(0)
-        else:
-            # Handle character input for 16x16 and 25x25
-            if key in range(pygame.K_0, pygame.K_9 + 1):
+            else:
                 char = chr(key)
                 self.handle_cell_input(char)
-            elif key in range(pygame.K_a, pygame.K_z + 1):
-                char = chr(key)
-                self.handle_cell_input(char)
-            elif key == pygame.K_RETURN or key == pygame.K_KP_ENTER:
-                self.confirm_cell_input()
-            elif key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
-                self.clear_cell_input()
+        elif key == pygame.K_KP0:
+            self.place_number(0)
+        elif key == pygame.K_KP1:
+            self.place_number(1)
+        elif key == pygame.K_KP2:
+            self.place_number(2)
+        elif key == pygame.K_KP3:
+            self.place_number(3)
+        elif key == pygame.K_KP4:
+            self.place_number(4)
+        elif key == pygame.K_KP5:
+            self.place_number(5)
+        elif key == pygame.K_KP6:
+            self.place_number(6)
+        elif key == pygame.K_KP7:
+            self.place_number(7)
+        elif key == pygame.K_KP8:
+            self.place_number(8)
+        elif key == pygame.K_KP9:
+            self.place_number(9)
+        elif key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
+            self.place_number(0)
+        # Handle character input for 16x16 and 25x25
+        elif key in range(pygame.K_a, pygame.K_z + 1):
+            char = chr(key)
+            self.handle_cell_input(char)
         
         # Arrow keys for navigation
         if key == pygame.K_UP:
@@ -612,10 +607,6 @@ class SudokuGame:
         new_row = (row + dy) % self.grid_size
         new_col = (col + dx) % self.grid_size
         self.selected_cell = (new_row, new_col)
-        
-        # Clear input buffer when moving
-        if self.grid_size != 9:
-            self.cell_input_buffer = ""
     
     def draw(self):
         """Draw the game screen"""

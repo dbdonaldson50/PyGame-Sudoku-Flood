@@ -30,9 +30,8 @@ def draw_game_screen(game):
     # Draw control buttons
     draw_control_buttons(game)
     
-    # Draw confirm/clear buttons for larger grids
-    if game.grid_size != 9:
-        draw_cell_buttons(game)
+    # Draw pencil mode indicator
+    draw_pencil_mode_indicator(game)
     
     # Draw settings modal if open
     if game.show_settings:
@@ -95,10 +94,7 @@ def draw_board(game):
             
             # Determine cell color
             if game.selected_cell == (i, j):
-                if game.grid_size != 9 and game.cell_input_buffer:
-                    color = YELLOW
-                else:
-                    color = BLUE
+                color = BLUE
             elif game.initial_board[i][j] is not None:
                 color = LIGHT_GRAY
             elif game.board[i][j] is not None and game.board[i][j] == game.solution[i][j]:
@@ -109,17 +105,16 @@ def draw_board(game):
             pygame.draw.rect(game.screen, color, (x, y, cell_size, cell_size))
             pygame.draw.rect(game.screen, GRAY, (x, y, cell_size, cell_size), 1)
             
-            # Draw number or buffer
-            display_text = None
-            if game.selected_cell == (i, j) and game.cell_input_buffer and game.grid_size != 9:
-                display_text = game.cell_input_buffer
-            elif game.board[i][j] is not None:
+            # Draw number, pencil marks, or nothing
+            if game.board[i][j] is not None:
+                # Draw the placed number
                 display_text = str(game.board[i][j])
-            
-            if display_text:
                 num_text = game.cell_font.render(display_text, True, BLACK)
                 num_rect = num_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
                 game.screen.blit(num_text, num_rect)
+            elif game.pencil_marks[i][j]:
+                # Draw pencil marks
+                draw_pencil_marks(game, i, j, x, y, cell_size)
     
     # Draw thick lines for boxes
     for i in range(0, game.grid_size + 1, game.box_size):
@@ -131,6 +126,68 @@ def draw_board(game):
         pygame.draw.line(game.screen, BLACK,
                        (game.BOARD_X + i * cell_size, BOARD_Y),
                        (game.BOARD_X + i * cell_size, BOARD_Y + game.BOARD_SIZE), 3)
+
+
+def draw_pencil_marks(game, row, col, x, y, cell_size):
+    """Draw pencil marks in a cell"""
+    marks = sorted(game.pencil_marks[row][col])
+    if not marks:
+        return
+    
+    # Determine grid layout based on grid size
+    if game.grid_size == 9:
+        # 3x3 grid for pencil marks (positions 1-9)
+        cols_per_row = 3
+    elif game.grid_size == 16:
+        # 4x4 grid for hex (0-F)
+        cols_per_row = 4
+    else:  # 25
+        # 5x5 grid for alphabet
+        cols_per_row = 5
+    
+    # Calculate spacing
+    mark_spacing_x = cell_size // cols_per_row
+    mark_spacing_y = cell_size // cols_per_row
+    
+    # Draw each pencil mark
+    for idx, mark in enumerate(marks):
+        # Calculate position in grid
+        if game.grid_size == 9:
+            # For 9x9, marks 1-9 map to positions 0-8
+            try:
+                mark_num = int(mark) - 1
+            except:
+                mark_num = idx
+        elif game.grid_size == 16:
+            # For 16x16, hex 0-F map to positions 0-15
+            if mark.isdigit():
+                mark_num = int(mark)
+            else:
+                mark_num = ord(mark) - ord('A') + 10
+        else:
+            # For 25x25, A-Y map to positions
+            mark_num = ord(mark) - ord('A')
+        
+        mark_row = mark_num // cols_per_row
+        mark_col = mark_num % cols_per_row
+        
+        # Calculate pixel position
+        mark_x = x + mark_col * mark_spacing_x + mark_spacing_x // 2
+        mark_y = y + mark_row * mark_spacing_y + mark_spacing_y // 2
+        
+        # Draw the mark
+        mark_text = game.pencil_font.render(str(mark), True, GRAY)
+        mark_rect = mark_text.get_rect(center=(mark_x, mark_y))
+        game.screen.blit(mark_text, mark_rect)
+
+
+def draw_pencil_mode_indicator(game):
+    """Draw pencil mode indicator"""
+    mode_text = "[P] Pencil Mode" if game.pencil_mode else "[P] Pen Mode"
+    mode_color = PURPLE if game.pencil_mode else BLACK
+    text = game.small_font.render(mode_text, True, mode_color)
+    text_rect = text.get_rect(right=WINDOW_WIDTH - 80, top=135)
+    game.screen.blit(text, text_rect)
 
 
 def draw_laser_effect(game):
@@ -183,23 +240,6 @@ def draw_control_buttons(game):
         text_surface = game.button_font.render(text, True, WHITE)
         text_rect = text_surface.get_rect(center=rect.center)
         game.screen.blit(text_surface, text_rect)
-
-
-def draw_cell_buttons(game):
-    """Draw confirm/clear buttons for multi-character input"""
-    # Confirm button
-    pygame.draw.rect(game.screen, DARK_GREEN, game.buttons['confirm'])
-    pygame.draw.rect(game.screen, BLACK, game.buttons['confirm'], 2)
-    confirm_text = game.button_font.render("Confirm", True, WHITE)
-    confirm_rect = confirm_text.get_rect(center=game.buttons['confirm'].center)
-    game.screen.blit(confirm_text, confirm_rect)
-    
-    # Clear button
-    pygame.draw.rect(game.screen, DARK_RED, game.buttons['clear_cell'])
-    pygame.draw.rect(game.screen, BLACK, game.buttons['clear_cell'], 2)
-    clear_text = game.button_font.render("Clear", True, WHITE)
-    clear_rect = clear_text.get_rect(center=game.buttons['clear_cell'].center)
-    game.screen.blit(clear_text, clear_rect)
 
 
 def draw_settings_modal(game):
