@@ -351,6 +351,9 @@ class SudokuGame:
             # Check if animation is complete
             if not self.animation_queue:
                 self.laser_source = None
+                # Check if puzzle is complete after animation finishes
+                if self.is_puzzle_complete():
+                    self.win_game()
     
     def get_cell_center(self, row, col):
         """Get the center coordinates of a cell"""
@@ -591,8 +594,26 @@ class SudokuGame:
         if key in range(pygame.K_0, pygame.K_9 + 1):
             self.place_number(key - pygame.K_0)
         # Handle numpad input
-        elif key in range(pygame.K_KP0, pygame.K_KP9 + 1):
-            self.place_number(key - pygame.K_KP0)
+        elif key == pygame.K_KP0:
+            self.place_number(0)
+        elif key == pygame.K_KP1:
+            self.place_number(1)
+        elif key == pygame.K_KP2:
+            self.place_number(2)
+        elif key == pygame.K_KP3:
+            self.place_number(3)
+        elif key == pygame.K_KP4:
+            self.place_number(4)
+        elif key == pygame.K_KP5:
+            self.place_number(5)
+        elif key == pygame.K_KP6:
+            self.place_number(6)
+        elif key == pygame.K_KP7:
+            self.place_number(7)
+        elif key == pygame.K_KP8:
+            self.place_number(8)
+        elif key == pygame.K_KP9:
+            self.place_number(9)
         elif key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
             self.place_number(0)
         
