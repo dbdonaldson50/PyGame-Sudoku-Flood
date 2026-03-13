@@ -1,6 +1,6 @@
 # Sudoku Game
 
-A Sudoku game with points and lives system, available in both web (HTML/JavaScript) and desktop (Python/Tkinter) versions.
+A desktop Sudoku game with points and lives system, built with Python and Pygame.
 
 ## Features
 
@@ -20,26 +20,34 @@ A Sudoku game with points and lives system, available in both web (HTML/JavaScri
   - Solution checker
   - Bonus points for time and remaining lives
 
-## Versions
+## Installation
 
-### Web Version
-Open `index.html` in a web browser to play.
+### Requirements
+- Python 3.9 or higher
+- Pygame library
 
-Files:
-- `index.html` - Main HTML structure
-- `styles.css` - Game styling
-- `script.js` - Game logic
+### Setup
 
-### Desktop Version (Python/Tkinter)
-Run the Python script to play:
+1. **Clone or download this repository**
+
+2. **Create a virtual environment (recommended)**:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate  # On macOS/Linux
+   # OR
+   .venv\Scripts\activate  # On Windows
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Running the Game
 
 ```bash
-python3 sudoku_game.py
+python sudoku_game.py
 ```
-
-Requirements:
-- Python 3.x
-- tkinter (usually included with Python)
 
 ## How to Play
 

@@ -5,18 +5,47 @@ Author: Red Donaldson
 Date: March 13, 2026
 """
 
-import tkinter as tk
-from tkinter import ttk, messagebox
+import pygame
 import random
 import copy
-from datetime import datetime, timedelta
+import sys
 
 
 class SudokuGame:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Sudoku Game")
-        self.root.resizable(False, False)
+    def __init__(self):
+        pygame.init()
+        
+        # Window settings
+        self.WINDOW_WIDTH = 700
+        self.WINDOW_HEIGHT = 900
+        self.screen = pygame.display.set_mode((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
+        pygame.display.set_caption("Sudoku Game")
+        
+        # Colors
+        self.WHITE = (255, 255, 255)
+        self.BLACK = (0, 0, 0)
+        self.GRAY = (200, 200, 200)
+        self.LIGHT_GRAY = (240, 240, 240)
+        self.BLUE = (187, 222, 251)
+        self.DARK_BLUE = (102, 126, 234)
+        self.GREEN = (200, 230, 201)
+        self.RED = (255, 205, 210)
+        self.PURPLE = (118, 75, 162)
+        self.DARK_GREEN = (46, 125, 50)
+        self.DARK_RED = (198, 40, 40)
+        
+        # Fonts
+        self.title_font = pygame.font.Font(None, 48)
+        self.large_font = pygame.font.Font(None, 36)
+        self.medium_font = pygame.font.Font(None, 28)
+        self.small_font = pygame.font.Font(None, 24)
+        self.cell_font = pygame.font.Font(None, 40)
+        
+        # Board settings
+        self.BOARD_SIZE = 540
+        self.CELL_SIZE = self.BOARD_SIZE // 9
+        self.BOARD_X = (self.WINDOW_WIDTH - self.BOARD_SIZE) // 2
+        self.BOARD_Y = 180
         
         # Game state
         self.board = []
@@ -29,7 +58,11 @@ class SudokuGame:
         self.difficulty = 'medium'
         self.seconds = 0
         self.game_over = False
-        self.timer_running = False
+        self.show_win_message = False
+        self.show_lose_message = False
+        self.message = ""
+        self.message_color = self.BLACK
+        self.message_timer = 0
         
         # Difficulty settings
         self.difficulty_settings = {
@@ -38,228 +71,70 @@ class SudokuGame:
             'hard': {'cells_to_remove': 50, 'lives': 5, 'points_per_cell': 15}
         }
         
-        # Colors
-        self.colors = {
-            'bg': '#f0f0f0',
-            'board_bg': 'white',
-            'given': '#f5f5f5',
-            'selected': '#bbdefb',
-            'correct': '#c8e6c9',
-            'incorrect': '#ffcdd2',
-            'border': '#333333',
-            'text': '#333333',
-            'given_text': '#000000'
-        }
-        
-        # GUI elements
-        self.cells = []
-        self.cell_entries = []
-        
-        self.setup_gui()
-        self.new_game()
-    
-    def setup_gui(self):
-        """Create the GUI layout"""
-        self.root.configure(bg=self.colors['bg'])
-        
-        # Title
-        title_label = tk.Label(
-            self.root,
-            text="Sudoku Game",
-            font=('Arial', 24, 'bold'),
-            bg=self.colors['bg'],
-            fg='#667eea'
-        )
-        title_label.pack(pady=10)
-        
-        # Info panel
-        info_frame = tk.Frame(self.root, bg=self.colors['bg'])
-        info_frame.pack(pady=10)
-        
-        # Lives
-        lives_frame = tk.Frame(info_frame, bg='white', relief=tk.RAISED, borderwidth=2)
-        lives_frame.pack(side=tk.LEFT, padx=10)
-        tk.Label(lives_frame, text="Lives", font=('Arial', 10), bg='white').pack()
-        self.lives_label = tk.Label(lives_frame, text="3", font=('Arial', 18, 'bold'), 
-                                     fg='#e74c3c', bg='white')
-        self.lives_label.pack(padx=20, pady=5)
-        
-        # Score
-        score_frame = tk.Frame(info_frame, bg='white', relief=tk.RAISED, borderwidth=2)
-        score_frame.pack(side=tk.LEFT, padx=10)
-        tk.Label(score_frame, text="Score", font=('Arial', 10), bg='white').pack()
-        self.score_label = tk.Label(score_frame, text="0", font=('Arial', 18, 'bold'), 
-                                     fg='#27ae60', bg='white')
-        self.score_label.pack(padx=20, pady=5)
+        # Buttons
+        self.buttons = self.create_buttons()
         
         # Timer
-        timer_frame = tk.Frame(info_frame, bg='white', relief=tk.RAISED, borderwidth=2)
-        timer_frame.pack(side=tk.LEFT, padx=10)
-        tk.Label(timer_frame, text="Time", font=('Arial', 10), bg='white').pack()
-        self.timer_label = tk.Label(timer_frame, text="00:00", font=('Arial', 18, 'bold'), 
-                                     fg='#333333', bg='white')
-        self.timer_label.pack(padx=20, pady=5)
+        self.clock = pygame.time.Clock()
+        self.timer_event = pygame.USEREVENT + 1
+        pygame.time.set_timer(self.timer_event, 1000)
         
-        # Message area
-        self.message_label = tk.Label(
-            self.root,
-            text="",
-            font=('Arial', 12, 'bold'),
-            bg=self.colors['bg'],
-            fg='#333333',
-            height=2
-        )
-        self.message_label.pack(pady=5)
-        
-        # Sudoku board
-        board_frame = tk.Frame(self.root, bg=self.colors['border'], relief=tk.RAISED, borderwidth=3)
-        board_frame.pack(pady=10)
-        
-        for i in range(9):
-            row_cells = []
-            for j in range(9):
-                # Create frame for each cell
-                cell_frame = tk.Frame(
-                    board_frame,
-                    bg=self.colors['board_bg'],
-                    width=50,
-                    height=50,
-                    relief=tk.SOLID,
-                    borderwidth=1
-                )
-                
-                # Add thicker borders for 3x3 boxes
-                padx = (3 if j % 3 == 0 else 1, 3 if j % 3 == 2 else 1)
-                pady = (3 if i % 3 == 0 else 1, 3 if i % 3 == 2 else 1)
-                
-                cell_frame.grid(row=i, column=j, padx=padx, pady=pady)
-                cell_frame.grid_propagate(False)
-                
-                # Create label for cell
-                cell_label = tk.Label(
-                    cell_frame,
-                    text="",
-                    font=('Arial', 20, 'bold'),
-                    bg=self.colors['board_bg'],
-                    fg=self.colors['text']
-                )
-                cell_label.pack(expand=True, fill=tk.BOTH)
-                cell_label.bind('<Button-1>', lambda e, r=i, c=j: self.select_cell(r, c))
-                
-                row_cells.append({'frame': cell_frame, 'label': cell_label})
-            
-            self.cells.append(row_cells)
-        
-        # Number selector
-        number_frame = tk.Frame(self.root, bg=self.colors['bg'])
-        number_frame.pack(pady=10)
-        
-        for i in range(1, 10):
-            btn = tk.Button(
-                number_frame,
-                text=str(i),
-                font=('Arial', 14, 'bold'),
-                width=3,
-                height=1,
-                command=lambda n=i: self.place_number(n),
-                bg='white',
-                fg='#667eea',
-                relief=tk.RAISED,
-                borderwidth=2
-            )
-            btn.pack(side=tk.LEFT, padx=3)
-        
-        # Erase button
-        erase_btn = tk.Button(
-            number_frame,
-            text="✖",
-            font=('Arial', 14, 'bold'),
-            width=3,
-            height=1,
-            command=lambda: self.place_number(0),
-            bg='white',
-            fg='#e74c3c',
-            relief=tk.RAISED,
-            borderwidth=2
-        )
-        erase_btn.pack(side=tk.LEFT, padx=3)
+        self.new_game()
+    
+    def create_buttons(self):
+        """Create UI buttons"""
+        buttons = {}
         
         # Control buttons
-        control_frame = tk.Frame(self.root, bg=self.colors['bg'])
-        control_frame.pack(pady=10)
+        button_y = self.BOARD_Y + self.BOARD_SIZE + 80
+        button_width = 150
+        button_height = 40
+        spacing = 20
         
-        new_game_btn = tk.Button(
-            control_frame,
-            text="New Game",
-            font=('Arial', 12, 'bold'),
-            command=self.new_game,
-            bg='#667eea',
-            fg='white',
-            relief=tk.RAISED,
-            borderwidth=2,
-            padx=15,
-            pady=5
+        start_x = (self.WINDOW_WIDTH - (button_width * 3 + spacing * 2)) // 2
+        
+        buttons['new_game'] = pygame.Rect(start_x, button_y, button_width, button_height)
+        buttons['hint'] = pygame.Rect(start_x + button_width + spacing, button_y, 
+                                      button_width, button_height)
+        buttons['check'] = pygame.Rect(start_x + (button_width + spacing) * 2, button_y, 
+                                       button_width, button_height)
+        
+        # Number buttons
+        number_y = self.BOARD_Y + self.BOARD_SIZE + 20
+        number_size = 50
+        number_spacing = 10
+        total_width = number_size * 10 + number_spacing * 9
+        number_start_x = (self.WINDOW_WIDTH - total_width) // 2
+        
+        for i in range(1, 10):
+            x = number_start_x + (i - 1) * (number_size + number_spacing)
+            buttons[f'num_{i}'] = pygame.Rect(x, number_y, number_size, number_size)
+        
+        # Erase button
+        buttons['erase'] = pygame.Rect(
+            number_start_x + 9 * (number_size + number_spacing), 
+            number_y, number_size, number_size
         )
-        new_game_btn.pack(side=tk.LEFT, padx=5)
         
-        hint_btn = tk.Button(
-            control_frame,
-            text="Hint (-10 pts)",
-            font=('Arial', 12, 'bold'),
-            command=self.give_hint,
-            bg='#667eea',
-            fg='white',
-            relief=tk.RAISED,
-            borderwidth=2,
-            padx=15,
-            pady=5
-        )
-        hint_btn.pack(side=tk.LEFT, padx=5)
+        # Difficulty buttons
+        diff_y = 750
+        diff_width = 100
+        diff_spacing = 20
+        diff_start_x = (self.WINDOW_WIDTH - (diff_width * 3 + diff_spacing * 2)) // 2
         
-        check_btn = tk.Button(
-            control_frame,
-            text="Check Solution",
-            font=('Arial', 12, 'bold'),
-            command=self.check_solution,
-            bg='#667eea',
-            fg='white',
-            relief=tk.RAISED,
-            borderwidth=2,
-            padx=15,
-            pady=5
-        )
-        check_btn.pack(side=tk.LEFT, padx=5)
+        buttons['easy'] = pygame.Rect(diff_start_x, diff_y, diff_width, 35)
+        buttons['medium'] = pygame.Rect(diff_start_x + diff_width + diff_spacing, 
+                                       diff_y, diff_width, 35)
+        buttons['hard'] = pygame.Rect(diff_start_x + (diff_width + diff_spacing) * 2, 
+                                      diff_y, diff_width, 35)
         
-        # Difficulty selector
-        difficulty_frame = tk.Frame(self.root, bg=self.colors['bg'])
-        difficulty_frame.pack(pady=10)
-        
-        tk.Label(
-            difficulty_frame,
-            text="Difficulty:",
-            font=('Arial', 12, 'bold'),
-            bg=self.colors['bg']
-        ).pack(side=tk.LEFT, padx=5)
-        
-        self.difficulty_var = tk.StringVar(value='medium')
-        difficulty_combo = ttk.Combobox(
-            difficulty_frame,
-            textvariable=self.difficulty_var,
-            values=['easy', 'medium', 'hard'],
-            state='readonly',
-            font=('Arial', 11),
-            width=15
-        )
-        difficulty_combo.pack(side=tk.LEFT, padx=5)
-        difficulty_combo.bind('<<ComboboxSelected>>', 
-                            lambda e: setattr(self, 'difficulty', self.difficulty_var.get()))
-        
-        # Keyboard bindings
-        self.root.bind('<Key>', self.on_key_press)
+        return buttons
     
     def new_game(self):
         """Start a new game"""
         self.game_over = False
+        self.show_win_message = False
+        self.show_lose_message = False
         self.score = 0
         self.seconds = 0
         
@@ -274,10 +149,7 @@ class SudokuGame:
         self.initial_board = copy.deepcopy(self.board)
         
         self.selected_cell = None
-        self.update_display()
-        self.render_board()
-        self.start_timer()
-        self.show_message("New game started! Good luck!", "#0c5460", "#d1ecf1")
+        self.show_message("New game started! Good luck!", self.DARK_BLUE)
     
     def generate_complete_sudoku(self):
         """Generate a complete valid Sudoku board"""
@@ -336,17 +208,15 @@ class SudokuGame:
                 self.board[row][col] = 0
                 removed += 1
     
-    def select_cell(self, row, col):
-        """Select a cell on the board"""
-        if self.game_over:
-            return
-        
-        # Can't select pre-filled cells
-        if self.initial_board[row][col] != 0:
-            return
-        
-        self.selected_cell = (row, col)
-        self.render_board()
+    def get_cell_from_pos(self, pos):
+        """Get board cell coordinates from mouse position"""
+        x, y = pos
+        if (self.BOARD_X <= x < self.BOARD_X + self.BOARD_SIZE and
+            self.BOARD_Y <= y < self.BOARD_Y + self.BOARD_SIZE):
+            col = (x - self.BOARD_X) // self.CELL_SIZE
+            row = (y - self.BOARD_Y) // self.CELL_SIZE
+            return (row, col)
+        return None
     
     def place_number(self, number):
         """Place a number in the selected cell"""
@@ -362,7 +232,6 @@ class SudokuGame:
         # Erase
         if number == 0:
             self.board[row][col] = 0
-            self.render_board()
             return
         
         # Check if correct
@@ -372,62 +241,17 @@ class SudokuGame:
             self.board[row][col] = number
             points = self.difficulty_settings[self.difficulty]['points_per_cell']
             self.score += points
-            self.show_message(f"Correct! +{points} points", "#155724", "#d4edda")
+            self.show_message(f"Correct! +{points} points", self.DARK_GREEN)
             
             # Check if puzzle complete
             if self.is_puzzle_complete():
                 self.win_game()
         else:
             self.lives -= 1
-            self.show_message("Wrong! -1 life", "#721c24", "#f8d7da")
-            
-            # Flash incorrect
-            cell = self.cells[row][col]
-            original_bg = cell['frame']['bg']
-            cell['frame'].configure(bg=self.colors['incorrect'])
-            cell['label'].configure(bg=self.colors['incorrect'])
-            self.root.after(500, lambda: (
-                cell['frame'].configure(bg=original_bg),
-                cell['label'].configure(bg=original_bg)
-            ))
+            self.show_message("Wrong! -1 life", self.DARK_RED)
             
             if self.lives <= 0:
                 self.lose_game()
-        
-        self.update_display()
-        self.render_board()
-    
-    def render_board(self):
-        """Render the current board state"""
-        for i in range(9):
-            for j in range(9):
-                cell = self.cells[i][j]
-                value = self.board[i][j]
-                
-                # Set text
-                cell['label']['text'] = str(value) if value != 0 else ""
-                
-                # Set colors
-                if self.initial_board[i][j] != 0:
-                    # Given cells
-                    cell['frame'].configure(bg=self.colors['given'])
-                    cell['label'].configure(bg=self.colors['given'], 
-                                          fg=self.colors['given_text'])
-                elif value != 0 and value == self.solution[i][j]:
-                    # Correct cells
-                    cell['frame'].configure(bg=self.colors['correct'])
-                    cell['label'].configure(bg=self.colors['correct'], 
-                                          fg=self.colors['text'])
-                else:
-                    # Empty or user cells
-                    cell['frame'].configure(bg=self.colors['board_bg'])
-                    cell['label'].configure(bg=self.colors['board_bg'], 
-                                          fg=self.colors['text'])
-                
-                # Highlight selected cell
-                if self.selected_cell and self.selected_cell == (i, j):
-                    cell['frame'].configure(bg=self.colors['selected'])
-                    cell['label'].configure(bg=self.colors['selected'])
     
     def is_puzzle_complete(self):
         """Check if the puzzle is completely solved"""
@@ -455,16 +279,12 @@ class SudokuGame:
             if empty_cells:
                 row, col = random.choice(empty_cells)
                 self.board[row][col] = self.solution[row][col]
-                self.show_message("Hint given! -10 points", "#0c5460", "#d1ecf1")
+                self.show_message("Hint given! -10 points", self.DARK_BLUE)
                 
                 if self.is_puzzle_complete():
                     self.win_game()
-                
-                self.update_display()
-                self.render_board()
         else:
-            self.show_message("Not enough points for a hint! (Need 10 points)", 
-                            "#721c24", "#f8d7da")
+            self.show_message("Not enough points for a hint! (Need 10 points)", self.DARK_RED)
     
     def check_solution(self):
         """Check the current solution status"""
@@ -482,94 +302,274 @@ class SudokuGame:
                         correct_count += 1
         
         if total_filled == 0:
-            self.show_message("Place some numbers first!", "#0c5460", "#d1ecf1")
+            self.show_message("Place some numbers first!", self.DARK_BLUE)
         else:
             percentage = round((correct_count / total_filled) * 100)
             self.show_message(
                 f"{correct_count}/{total_filled} correct ({percentage}%)",
-                "#0c5460", "#d1ecf1"
+                self.DARK_BLUE
             )
     
     def win_game(self):
         """Handle winning the game"""
         self.game_over = True
-        self.stop_timer()
+        self.show_win_message = True
         
         time_bonus = max(0, 500 - self.seconds)
         lives_bonus = self.lives * 50
         total_score = self.score + time_bonus + lives_bonus
         
-        message = (f"🎉 You Win!\n"
-                  f"Total Score: {total_score}\n"
-                  f"(Base: {self.score} + Time: {time_bonus} + Lives: {lives_bonus})")
-        
-        messagebox.showinfo("Congratulations!", message)
-        self.show_message(f"You Win! Total: {total_score}", "#155724", "#d4edda")
+        self.message = (f"🎉 You Win! Total Score: {total_score}\n"
+                       f"(Base: {self.score} + Time: {time_bonus} + Lives: {lives_bonus})")
+        self.message_color = self.DARK_GREEN
     
     def lose_game(self):
         """Handle losing the game"""
         self.game_over = True
-        self.stop_timer()
+        self.show_lose_message = True
         
-        message = f"💀 Game Over!\nYou ran out of lives.\nFinal Score: {self.score}"
-        messagebox.showinfo("Game Over", message)
-        self.show_message(f"Game Over! Score: {self.score}", "#721c24", "#f8d7da")
+        self.message = f"💀 Game Over! You ran out of lives.\nFinal Score: {self.score}"
+        self.message_color = self.DARK_RED
         
-        # Show solution
-        self.root.after(1500, lambda: (
-            setattr(self, 'board', copy.deepcopy(self.solution)),
-            self.render_board()
-        ))
+        # Show solution after a delay
+        self.board = copy.deepcopy(self.solution)
     
-    def start_timer(self):
-        """Start the game timer"""
-        self.timer_running = True
-        self.update_timer()
+    def show_message(self, text, color):
+        """Show a temporary message"""
+        self.message = text
+        self.message_color = color
+        self.message_timer = 180  # 3 seconds at 60 FPS
     
-    def stop_timer(self):
-        """Stop the game timer"""
-        self.timer_running = False
-    
-    def update_timer(self):
-        """Update the timer display"""
-        if self.timer_running and not self.game_over:
-            self.seconds += 1
-            minutes = self.seconds // 60
-            seconds = self.seconds % 60
-            self.timer_label['text'] = f"{minutes:02d}:{seconds:02d}"
-            self.root.after(1000, self.update_timer)
-    
-    def update_display(self):
-        """Update the score and lives display"""
-        self.lives_label['text'] = str(self.lives)
-        self.score_label['text'] = str(self.score)
-    
-    def show_message(self, text, fg, bg):
-        """Show a message to the user"""
-        self.message_label['text'] = text
-        self.message_label['fg'] = fg
-        self.message_label['bg'] = bg
+    def handle_click(self, pos):
+        """Handle mouse click events"""
+        # Check board cells
+        cell = self.get_cell_from_pos(pos)
+        if cell:
+            row, col = cell
+            if self.initial_board[row][col] == 0:
+                self.selected_cell = cell
+            return
         
-        # Clear message after 3 seconds
-        self.root.after(3000, lambda: self.message_label.configure(text="", 
-                                                                   bg=self.colors['bg']))
+        # Check buttons
+        if self.buttons['new_game'].collidepoint(pos):
+            self.new_game()
+        elif self.buttons['hint'].collidepoint(pos):
+            self.give_hint()
+        elif self.buttons['check'].collidepoint(pos):
+            self.check_solution()
+        elif self.buttons['erase'].collidepoint(pos):
+            self.place_number(0)
+        elif self.buttons['easy'].collidepoint(pos):
+            self.difficulty = 'easy'
+        elif self.buttons['medium'].collidepoint(pos):
+            self.difficulty = 'medium'
+        elif self.buttons['hard'].collidepoint(pos):
+            self.difficulty = 'hard'
+        else:
+            # Check number buttons
+            for i in range(1, 10):
+                if self.buttons[f'num_{i}'].collidepoint(pos):
+                    self.place_number(i)
+                    break
     
-    def on_key_press(self, event):
-        """Handle keyboard input"""
+    def handle_key(self, key):
+        """Handle keyboard events"""
         if self.game_over:
             return
         
-        if event.char in '123456789':
-            self.place_number(int(event.char))
-        elif event.keysym in ['BackSpace', 'Delete']:
+        if key in range(pygame.K_1, pygame.K_9 + 1):
+            self.place_number(key - pygame.K_0)
+        elif key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
             self.place_number(0)
+    
+    def draw(self):
+        """Draw the game screen"""
+        self.screen.fill(self.WHITE)
+        
+        # Title
+        title_text = self.title_font.render("Sudoku Game", True, self.PURPLE)
+        title_rect = title_text.get_rect(center=(self.WINDOW_WIDTH // 2, 40))
+        self.screen.blit(title_text, title_rect)
+        
+        # Game info
+        info_y = 90
+        
+        # Lives
+        lives_text = self.medium_font.render(f"Lives: {self.lives}", True, self.DARK_RED)
+        self.screen.blit(lives_text, (100, info_y))
+        
+        # Score
+        score_text = self.medium_font.render(f"Score: {self.score}", True, self.DARK_GREEN)
+        score_rect = score_text.get_rect(center=(self.WINDOW_WIDTH // 2, info_y + 14))
+        self.screen.blit(score_text, score_rect)
+        
+        # Timer
+        minutes = self.seconds // 60
+        seconds = self.seconds % 60
+        timer_text = self.medium_font.render(f"Time: {minutes:02d}:{seconds:02d}", 
+                                            True, self.BLACK)
+        timer_rect = timer_text.get_rect(right=self.WINDOW_WIDTH - 100, centery=info_y + 14)
+        self.screen.blit(timer_text, timer_rect)
+        
+        # Message
+        if self.message and (self.message_timer > 0 or self.game_over):
+            lines = self.message.split('\n')
+            for i, line in enumerate(lines):
+                msg_text = self.small_font.render(line, True, self.message_color)
+                msg_rect = msg_text.get_rect(center=(self.WINDOW_WIDTH // 2, 140 + i * 25))
+                self.screen.blit(msg_text, msg_rect)
+            
+            if self.message_timer > 0:
+                self.message_timer -= 1
+        
+        # Draw board
+        self.draw_board()
+        
+        # Draw number buttons
+        self.draw_number_buttons()
+        
+        # Draw control buttons
+        self.draw_control_buttons()
+        
+        # Draw difficulty selector
+        self.draw_difficulty_selector()
+        
+        pygame.display.flip()
+    
+    def draw_board(self):
+        """Draw the Sudoku board"""
+        # Draw cells
+        for i in range(9):
+            for j in range(9):
+                x = self.BOARD_X + j * self.CELL_SIZE
+                y = self.BOARD_Y + i * self.CELL_SIZE
+                
+                # Determine cell color
+                if self.selected_cell == (i, j):
+                    color = self.BLUE
+                elif self.initial_board[i][j] != 0:
+                    color = self.LIGHT_GRAY
+                elif self.board[i][j] != 0 and self.board[i][j] == self.solution[i][j]:
+                    color = self.GREEN
+                else:
+                    color = self.WHITE
+                
+                pygame.draw.rect(self.screen, color, 
+                               (x, y, self.CELL_SIZE, self.CELL_SIZE))
+                pygame.draw.rect(self.screen, self.GRAY, 
+                               (x, y, self.CELL_SIZE, self.CELL_SIZE), 1)
+                
+                # Draw number
+                if self.board[i][j] != 0:
+                    num_text = self.cell_font.render(str(self.board[i][j]), True, self.BLACK)
+                    num_rect = num_text.get_rect(
+                        center=(x + self.CELL_SIZE // 2, y + self.CELL_SIZE // 2)
+                    )
+                    self.screen.blit(num_text, num_rect)
+        
+        # Draw thick lines for 3x3 boxes
+        for i in range(10):
+            thickness = 4 if i % 3 == 0 else 1
+            # Horizontal lines
+            pygame.draw.line(self.screen, self.BLACK,
+                           (self.BOARD_X, self.BOARD_Y + i * self.CELL_SIZE),
+                           (self.BOARD_X + self.BOARD_SIZE, self.BOARD_Y + i * self.CELL_SIZE),
+                           thickness)
+            # Vertical lines
+            pygame.draw.line(self.screen, self.BLACK,
+                           (self.BOARD_X + i * self.CELL_SIZE, self.BOARD_Y),
+                           (self.BOARD_X + i * self.CELL_SIZE, self.BOARD_Y + self.BOARD_SIZE),
+                           thickness)
+    
+    def draw_number_buttons(self):
+        """Draw number selector buttons"""
+        for i in range(1, 10):
+            btn = self.buttons[f'num_{i}']
+            pygame.draw.rect(self.screen, self.DARK_BLUE, btn, border_radius=8)
+            pygame.draw.rect(self.screen, self.BLACK, btn, 2, border_radius=8)
+            
+            text = self.medium_font.render(str(i), True, self.WHITE)
+            text_rect = text.get_rect(center=btn.center)
+            self.screen.blit(text, text_rect)
+        
+        # Erase button
+        btn = self.buttons['erase']
+        pygame.draw.rect(self.screen, self.DARK_RED, btn, border_radius=8)
+        pygame.draw.rect(self.screen, self.BLACK, btn, 2, border_radius=8)
+        
+        text = self.medium_font.render("✖", True, self.WHITE)
+        text_rect = text.get_rect(center=btn.center)
+        self.screen.blit(text, text_rect)
+    
+    def draw_control_buttons(self):
+        """Draw control buttons"""
+        buttons_info = [
+            ('new_game', 'New Game'),
+            ('hint', 'Hint (-10)'),
+            ('check', 'Check')
+        ]
+        
+        for btn_name, label in buttons_info:
+            btn = self.buttons[btn_name]
+            pygame.draw.rect(self.screen, self.DARK_BLUE, btn, border_radius=8)
+            pygame.draw.rect(self.screen, self.BLACK, btn, 2, border_radius=8)
+            
+            text = self.small_font.render(label, True, self.WHITE)
+            text_rect = text.get_rect(center=btn.center)
+            self.screen.blit(text, text_rect)
+    
+    def draw_difficulty_selector(self):
+        """Draw difficulty selector buttons"""
+        # Label
+        label = self.medium_font.render("Difficulty:", True, self.BLACK)
+        label_rect = label.get_rect(center=(self.WINDOW_WIDTH // 2, 720))
+        self.screen.blit(label, label_rect)
+        
+        difficulties = ['easy', 'medium', 'hard']
+        for diff in difficulties:
+            btn = self.buttons[diff]
+            
+            # Highlight selected difficulty
+            if self.difficulty == diff:
+                color = self.PURPLE
+            else:
+                color = self.GRAY
+            
+            pygame.draw.rect(self.screen, color, btn, border_radius=5)
+            pygame.draw.rect(self.screen, self.BLACK, btn, 2, border_radius=5)
+            
+            text_color = self.WHITE if self.difficulty == diff else self.BLACK
+            text = self.small_font.render(diff.capitalize(), True, text_color)
+            text_rect = text.get_rect(center=btn.center)
+            self.screen.blit(text, text_rect)
+    
+    def run(self):
+        """Main game loop"""
+        running = True
+        
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    self.handle_click(event.pos)
+                elif event.type == pygame.KEYDOWN:
+                    self.handle_key(event.key)
+                elif event.type == self.timer_event:
+                    if not self.game_over:
+                        self.seconds += 1
+            
+            self.draw()
+            self.clock.tick(60)
+        
+        pygame.quit()
+        sys.exit()
 
 
 def main():
     """Main entry point"""
-    root = tk.Tk()
-    game = SudokuGame(root)
-    root.mainloop()
+    game = SudokuGame()
+    game.run()
 
 
 if __name__ == "__main__":
