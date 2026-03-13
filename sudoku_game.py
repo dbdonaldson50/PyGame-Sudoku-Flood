@@ -233,27 +233,31 @@ class SudokuGame:
     
     def get_possible_values(self, row, col):
         """Get all possible values for a given cell"""
-        if self.board[row][col] != 0:
+        return self.get_possible_values_for_board(self.board, row, col)
+    
+    def get_possible_values_for_board(self, board, row, col):
+        """Get all possible values for a given cell on a specific board"""
+        if board[row][col] != 0:
             return set()
         
         possible = set(range(1, 10))
         
         # Remove values in same row
         for c in range(9):
-            if self.board[row][c] != 0:
-                possible.discard(self.board[row][c])
+            if board[row][c] != 0:
+                possible.discard(board[row][c])
         
         # Remove values in same column
         for r in range(9):
-            if self.board[r][col] != 0:
-                possible.discard(self.board[r][col])
+            if board[r][col] != 0:
+                possible.discard(board[r][col])
         
         # Remove values in same 3x3 box
         box_row, box_col = 3 * (row // 3), 3 * (col // 3)
         for i in range(box_row, box_row + 3):
             for j in range(box_col, box_col + 3):
-                if self.board[i][j] != 0:
-                    possible.discard(self.board[i][j])
+                if board[i][j] != 0:
+                    possible.discard(board[i][j])
         
         return possible
     
@@ -262,6 +266,9 @@ class SudokuGame:
         filled_sequence = []
         changes_made = True
         
+        # Create a temporary board to simulate the fills
+        temp_board = [row[:] for row in self.board]
+        
         # Keep looping until no more single-possibility cells are found
         while changes_made:
             changes_made = False
@@ -269,15 +276,16 @@ class SudokuGame:
             for i in range(9):
                 for j in range(9):
                     # Skip cells that are already filled or initially given
-                    if self.board[i][j] != 0 or self.initial_board[i][j] != 0:
+                    if temp_board[i][j] != 0 or self.initial_board[i][j] != 0:
                         continue
                     
-                    possible = self.get_possible_values(i, j)
+                    # Get possible values based on temp board
+                    possible = self.get_possible_values_for_board(temp_board, i, j)
                     
-                    # If only one possibility, fill it in
+                    # If only one possibility, record it (but don't fill real board yet)
                     if len(possible) == 1:
                         value = possible.pop()
-                        self.board[i][j] = value
+                        temp_board[i][j] = value  # Fill temp board for cascade detection
                         filled_sequence.append((i, j, value))
                         changes_made = True
         
@@ -305,9 +313,12 @@ class SudokuGame:
         
         self.animation_queue = filled_sequence.copy()
         self.current_animation_frame = 0
-        # Set laser source to the first filled cell
+        
+        # Fill the first cell immediately (laser appears there)
         if len(filled_sequence) > 0:
-            self.laser_source = (filled_sequence[0][0], filled_sequence[0][1])
+            row, col, value = filled_sequence[0]
+            self.board[row][col] = value
+            self.laser_source = (row, col)
     
     def update_animation(self):
         """Update animation state each frame"""
@@ -319,9 +330,14 @@ class SudokuGame:
         # Move to next cell in animation
         if self.current_animation_frame >= self.animation_speed:
             self.current_animation_frame = 0
+            
             if len(self.animation_queue) > 1:
+                # Fill the next cell that the laser is about to reach
+                row, col, value = self.animation_queue[1]
+                self.board[row][col] = value
+                
                 # Set the next cell as the laser source
-                self.laser_source = (self.animation_queue[1][0], self.animation_queue[1][1])
+                self.laser_source = (row, col)
                 self.animation_queue.pop(0)
             else:
                 # Animation complete
