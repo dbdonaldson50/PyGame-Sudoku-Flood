@@ -347,24 +347,77 @@ def is_valid_placement(board, row, col, symbol, grid_size, box_size):
 
 
 def remove_numbers(board, grid_size, cells_to_remove):
-    """Remove numbers to create the puzzle - optimized for better distribution"""
+    """Remove numbers to create the puzzle with 180° rotational symmetry
+    
+    Modified by: Red Donaldson
+    Date: March 14, 2026
+    
+    The pattern of given digits now follows 180° rotational symmetry:
+    - If cell (r,c) is removed, cell (grid_size-1-r, grid_size-1-c) is also removed
+    - Center cell (for odd grid sizes) is handled independently
+    - This creates visually pleasing, professionally symmetric puzzles
+    """
     removed = 0
     attempts = 0
-    max_attempts = cells_to_remove * 3  # Prevent infinite loops
+    max_attempts = cells_to_remove * 5  # Increased for symmetry constraints
     
-    # Create list of all cell positions for better randomization
-    all_positions = [(i, j) for i in range(grid_size) for j in range(grid_size)]
-    random.shuffle(all_positions)
+    # Generate symmetric cell pairs for 180° rotational symmetry
+    cell_pairs = []
+    center_cell = None
     
-    pos_idx = 0
+    # Track all cells and create symmetric pairs
+    processed = set()
+    
+    for i in range(grid_size):
+        for j in range(grid_size):
+            if (i, j) in processed:
+                continue
+            
+            # Calculate symmetric counterpart (180° rotation)
+            sym_i = grid_size - 1 - i
+            sym_j = grid_size - 1 - j
+            
+            # Check if this is the center cell (maps to itself)
+            if i == sym_i and j == sym_j:
+                center_cell = (i, j)
+            else:
+                # Add as a symmetric pair
+                cell_pairs.append(((i, j), (sym_i, sym_j)))
+                processed.add((i, j))
+                processed.add((sym_i, sym_j))
+    
+    # Shuffle pairs for randomization
+    random.shuffle(cell_pairs)
+    
+    # Remove cells in symmetric pairs
+    pair_idx = 0
     while removed < cells_to_remove and attempts < max_attempts:
-        row, col = all_positions[pos_idx % len(all_positions)]
-        pos_idx += 1
         attempts += 1
         
-        if board[row][col] is not None:
-            board[row][col] = None
-            removed += 1
+        # Determine how many cells we need to remove
+        cells_needed = cells_to_remove - removed
+        
+        # Try to remove a symmetric pair (2 cells)
+        if cells_needed >= 2 and pair_idx < len(cell_pairs):
+            cell1, cell2 = cell_pairs[pair_idx]
+            pair_idx += 1
+            
+            # Remove both cells in the pair
+            if board[cell1[0]][cell1[1]] is not None and board[cell2[0]][cell2[1]] is not None:
+                board[cell1[0]][cell1[1]] = None
+                board[cell2[0]][cell2[1]] = None
+                removed += 2
+        
+        # If we need exactly 1 more cell, remove center cell (odd grid sizes)
+        elif cells_needed == 1 and center_cell is not None:
+            if board[center_cell[0]][center_cell[1]] is not None:
+                board[center_cell[0]][center_cell[1]] = None
+                removed += 1
+            break
+        
+        # If we've run out of pairs, break
+        elif pair_idx >= len(cell_pairs):
+            break
 
 
 def get_possible_values(board, row, col, grid_size, box_size, symbols):

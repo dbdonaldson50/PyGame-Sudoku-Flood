@@ -13,7 +13,7 @@ def draw_main_menu(game):
     game.screen.fill(MENU_BG)
     
     # Draw title
-    title_text = game.title_font.render("Sudoku Game", True, MENU_TITLE_COLOR)
+    title_text = game.title_font.render("Sudoku Flash", True, MENU_TITLE_COLOR)
     title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2, 120))
     game.screen.blit(title_text, title_rect)
     
@@ -196,7 +196,7 @@ def draw_game_screen(game):
 
 def draw_title(game):
     """Draw the game title"""
-    title_text = game.title_font.render("Sudoku Game", True, PURPLE)
+    title_text = game.title_font.render("Sudoku Flash", True, PURPLE)
     title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2, 40))
     game.screen.blit(title_text, title_rect)
 
@@ -466,14 +466,20 @@ def draw_control_buttons(game):
         ('new_game', 'New', DARK_BLUE, HOVER_BLUE),
         ('hint', 'Hint', DARK_GREEN, HOVER_GREEN),
         ('undo', 'Undo', UNDO_COLOR, (180, 180, 180)),
-        ('settings', 'Settings', PURPLE, HOVER_PURPLE)
+        ('settings', 'Settings', PURPLE, HOVER_PURPLE),
+        ('remaining', 'Digits', BUTTON_ORANGE, HOVER_ORANGE)  # Always include, conditionally render
     ]
     
-    # Add "Remaining" button for large grids (16x16, 25x25)
-    if game.grid_size > 9:
-        button_data.append(('remaining', 'Digits', BUTTON_ORANGE, HOVER_ORANGE))
-    
     for key, text, color, hover_color in button_data:
+        # Skip "Remaining" button for small grids (9x9)
+        if key == 'remaining' and game.grid_size <= 9:
+            continue
+            
+        # Defensive check: ensure button exists before trying to access it
+        if key not in game.buttons:
+            print(f"Warning: Button '{key}' not found in game.buttons")
+            continue
+            
         rect = game.buttons[key]
         
         # Check if mouse is hovering over button
@@ -749,9 +755,9 @@ def draw_combo_indicator(game):
     if game.combo_count <= 0:
         return
     
-    # Position at top right, next to timer
-    x = WINDOW_WIDTH - 100
-    y = 130
+    # Position at top left, below Lives display to avoid overlap with Mode indicator
+    x = 100
+    y = 145
     
     combo_idx = min(game.combo_count, COMBO_MAX_LEVEL)
     combo_color = COMBO_COLORS[combo_idx]

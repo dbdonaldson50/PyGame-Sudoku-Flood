@@ -27,7 +27,7 @@ class SudokuGame:
         self.WINDOW_WIDTH = WINDOW_WIDTH
         self.WINDOW_HEIGHT = WINDOW_HEIGHT
         self.screen = pygame.display.set_mode((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
-        pygame.display.set_caption("Sudoku Game")
+        pygame.display.set_caption("Sudoku Flash")
         
         # Colors
         self.WHITE = WHITE
@@ -159,12 +159,13 @@ class SudokuGame:
         self.buttons['instructions_close'] = pygame.Rect(modal_x + modal_width - 50, modal_y + 10, 40, 40)
         
         # Control buttons (New Game, Hint, Undo, Settings, Remaining) - fixed position
+        # Note: "Remaining" button is always created but only drawn for large grids (16x16, 25x25)
         button_width = 72
         button_height = 35
         button_y = 945  # Fixed position at bottom
         spacing = 8
         
-        total_buttons = 5  # Now includes Remaining Digits button
+        total_buttons = 5  # Includes Remaining Digits button (always created, conditionally drawn)
         start_x = (self.WINDOW_WIDTH - (button_width * total_buttons + spacing * (total_buttons - 1))) // 2
         
         self.buttons['new_game'] = pygame.Rect(start_x, button_y, button_width, button_height)
@@ -272,7 +273,8 @@ class SudokuGame:
         self.cell_flash_effects = []
         self.last_action_triggered_combo = False
         self.show_lose_message = False
-        self.show_settings = False  # FIX: Close settings modal when starting new game
+        self.show_settings = False  # Close settings modal when starting new game
+        self.show_remaining_digits = False  # FIX: Close remaining digits modal when starting new game - Red Donaldson
         self.game_state = 'playing'  # Set to playing state
         self.score = 0
         self.seconds = 0
@@ -330,7 +332,8 @@ class SudokuGame:
             base_points = self.difficulty_settings[self.difficulty]['points_per_cell']
             total_points = 0
             
-            # Process each auto-filled cell with escalating combo
+            # Calculate points for each cell (but don't show effects yet)
+            # Effects will be shown sequentially during animation
             for idx, (row, col, value) in enumerate(filled_sequence):
                 # Update combo multiplier
                 self.update_combo(increment=True)
@@ -338,20 +341,6 @@ class SudokuGame:
                 # Calculate points for this cell with current multiplier
                 cell_points = int((base_points // 2) * self.combo_multiplier)
                 total_points += cell_points
-                
-                # Add floating point effect at cell position
-                cell_size = self.BOARD_SIZE // self.grid_size
-                x = self.BOARD_X + col * cell_size + cell_size // 2
-                y = self.BOARD_Y + row * cell_size + cell_size // 2
-                
-                # Color based on combo level
-                combo_idx = min(self.combo_count, COMBO_MAX_LEVEL)
-                point_color = COMBO_COLORS[combo_idx]
-                
-                self.add_floating_points(x, y, cell_points, point_color)
-                
-                # Add cell flash effect
-                self.add_cell_flash(row, col, 'combo' if self.combo_count > 0 else 'auto_fill')
             
             # Award total points
             self.score += total_points
@@ -375,8 +364,8 @@ class SudokuGame:
             else:
                 self.show_message(f"+{total_points} pts ({filled_count} auto-filled)", self.DARK_BLUE)
             
-            # Start animation
-            self.start_animation(filled_sequence, source_cell)
+            # Start animation with visual effects data
+            self.start_animation(filled_sequence, source_cell, base_points)
             self.last_action_triggered_combo = True
         else:
             # No auto-fill means combo breaks
@@ -386,24 +375,41 @@ class SudokuGame:
         
         return filled_count
     
-    def start_animation(self, filled_sequence, source_cell=None):
-        """Initialize animation for auto-filled cells"""
+    def start_animation(self, filled_sequence, source_cell=None, base_points=0):
+        """Initialize animation for auto-filled cells with visual effects data"""
         if not filled_sequence:
             return
         
-        self.animation_queue = filled_sequence.copy()
+        # Build animation queue with effect data for each cell
+        # Each entry: (row, col, value, points, combo_level)
+        self.animation_queue = []
+        combo_tracker = self.combo_count - len(filled_sequence)  # Start from before the fill
+        
+        for row, col, value in filled_sequence:
+            combo_tracker += 1
+            combo_tracker = min(combo_tracker, COMBO_MAX_LEVEL)
+            
+            # Calculate points with combo multiplier
+            multiplier = COMBO_MULTIPLIERS[combo_tracker]
+            cell_points = int((base_points // 2) * multiplier)
+            
+            self.animation_queue.append((row, col, value, cell_points, combo_tracker))
+        
         self.current_animation_frame = 0
         
         # Set laser source to the user's cell if provided
         if source_cell:
             self.laser_source = source_cell
         else:
-            row, col, value = filled_sequence[0]
+            # Place first cell immediately and use it as laser source
+            row, col, value, points, combo_level = self.animation_queue[0]
             self.board[row][col] = value
+            self.pencil_marks[row][col].clear()
             self.laser_source = (row, col)
+            self.animation_queue.pop(0)
     
     def update_animation(self):
-        """Update animation state each frame"""
+        """Update animation state each frame - sequential cell filling with effects"""
         if not self.animation_queue:
             return
         
@@ -413,12 +419,30 @@ class SudokuGame:
         if self.current_animation_frame >= self.animation_speed:
             self.current_animation_frame = 0
             
-            # Fill the first cell in queue
+            # Fill the first cell in queue with visual effects
             if self.animation_queue:
-                row, col, value = self.animation_queue[0]
-                self.board[row][col] = value
-                self.pencil_marks[row][col].clear()  # Clear pencil marks when auto-filling
+                row, col, value, points, combo_level = self.animation_queue[0]
                 
+                # Place the cell
+                self.board[row][col] = value
+                self.pencil_marks[row][col].clear()
+                
+                # Add visual effects for this specific cell
+                cell_size = self.BOARD_SIZE // self.grid_size
+                x = self.BOARD_X + col * cell_size + cell_size // 2
+                y = self.BOARD_Y + row * cell_size + cell_size // 2
+                
+                # Color based on combo level
+                point_color = COMBO_COLORS[combo_level]
+                
+                # Show points floating from this cell
+                self.add_floating_points(x, y, points, point_color)
+                
+                # Add green flash effect
+                flash_type = 'combo' if combo_level > 0 else 'auto_fill'
+                self.add_cell_flash(row, col, flash_type)
+                
+                # Update laser source to this cell for next animation frame
                 self.laser_source = (row, col)
                 self.animation_queue.pop(0)
             
@@ -877,8 +901,10 @@ class SudokuGame:
             self.undo()
         elif self.buttons['settings'].collidepoint(pos):
             self.show_settings = True
-        elif self.buttons['remaining'].collidepoint(pos):
-            self.show_remaining_digits = True
+        elif 'remaining' in self.buttons and self.buttons['remaining'].collidepoint(pos):
+            # Only handle click if button exists (defensive check) and for large grids
+            if self.grid_size > 9:
+                self.show_remaining_digits = True
     
     def handle_key(self, key):
         """Handle keyboard events"""
