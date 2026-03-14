@@ -406,11 +406,12 @@ def draw_remaining_numbers(game):
     title_rect = title_text.get_rect(left=80, top=135)
     game.screen.blit(title_text, title_rect)
     
-    # Draw counts in compact format
+    # Draw counts in compact format with proper spacing for Courier New
     y_pos = 155
     x_pos = 80
     items_per_row = 9 if game.grid_size == 9 else (8 if game.grid_size == 16 else 13)
-    spacing = 25 if game.grid_size == 9 else (23 if game.grid_size == 16 else 15)
+    # Increased spacing for Courier New font to prevent overlap
+    spacing = 32 if game.grid_size == 9 else (30 if game.grid_size == 16 else 22)
     
     for idx, symbol in enumerate(game.symbols):
         count = remaining[symbol]
@@ -427,7 +428,7 @@ def draw_remaining_numbers(game):
         x_pos += spacing
         if (idx + 1) % items_per_row == 0:
             x_pos = 80
-            y_pos += 20
+            y_pos += 22  # Increased vertical spacing
 
 
 
@@ -609,15 +610,15 @@ def draw_remaining_digits_modal(game):
     y_pos = modal.top + 130
     x_start = modal.left + 30
     
-    # Determine layout based on grid size
+    # Determine layout based on grid size with spacing for Courier New
     if game.grid_size == 16:
         items_per_row = 8
-        spacing_x = 55
-        spacing_y = 35
+        spacing_x = 58  # Increased from 55 for Courier New
+        spacing_y = 37  # Increased from 35
     else:  # 25x25
         items_per_row = 10
-        spacing_x = 45
-        spacing_y = 32
+        spacing_x = 47  # Increased from 45 for Courier New
+        spacing_y = 34  # Increased from 32
     
     x_pos = x_start
     

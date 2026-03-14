@@ -244,20 +244,24 @@ class SudokuGame:
                                                        remaining_modal_y + 10, 30, 30)
     
     def update_cell_font(self):
-        """Update cell font size based on grid size"""
+        """Update cell font size based on grid size with proper spacing"""
+        # Calculate cell size to determine safe font sizes
+        cell_size = self.BOARD_SIZE // self.grid_size
+        
+        # Font size should be ~50-60% of cell height for comfortable fit
+        # This prevents overlap while maintaining readability
         if self.grid_size == 9:
-            font_size = 40
+            font_size = 38  # Reduced from 40 for better spacing
         elif self.grid_size == 16:
-            font_size = 28
+            font_size = 26  # Reduced from 28 for better spacing
         else:  # 25
-            font_size = 20
+            font_size = 17  # Reduced from 20 to prevent tight fit
         
         # Calculate pencil mark size based on cell size
         # Each pencil mark occupies 1/box_size of the cell dimension
-        # Font should be ~65-70% of that slot to leave spacing
-        cell_size = self.BOARD_SIZE // self.grid_size
+        # Font should be ~60-65% of that slot to leave spacing
         pencil_slot_size = cell_size / self.box_size
-        pencil_size = int(pencil_slot_size * 0.68)  # 68% of slot size for spacing
+        pencil_size = int(pencil_slot_size * 0.62)  # Reduced from 68% for better spacing
         
         # Both fonts explicitly non-bold, non-italic for consistent character sizing
         # Critical: monospace fonts ensure all characters have identical widths
