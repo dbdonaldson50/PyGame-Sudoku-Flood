@@ -1,10 +1,40 @@
-# 🎮 Sudoku Game
+# 🎮 Sudoku Flash
 
 A feature-rich desktop Sudoku game with modern UI, multiple grid sizes, and advanced gameplay mechanics. Built with Python and Pygame.
 
 **Author:** Red Donaldson  
-**Version:** 1.0.0  
-**Date:** March 13, 2026
+**Version:** 2.0.0  
+**Date:** March 14, 2026
+
+---
+
+## 🚀 Quick Start
+
+### Run the Game
+
+```bash
+python3 sudoku_flash.py
+```
+
+Or with virtual environment:
+```bash
+source .venv/bin/activate
+python sudoku_flash.py
+```
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/dbdonaldson50/PyGame-Sudoku-Flood.git
+cd PyGame-Sudoku-Flood
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the game
+python3 sudoku_flash.py
+```
 
 ---
 
