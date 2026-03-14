@@ -5,7 +5,12 @@ Date: March 13, 2026
 """
 
 import pygame
-from .constants import *
+
+# Handle both package and direct imports
+try:
+    from .constants import *
+except ImportError:
+    from constants import *
 
 
 def draw_main_menu(game):

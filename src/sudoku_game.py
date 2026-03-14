@@ -13,10 +13,15 @@ import sys
 # Increase recursion limit for large grid generation
 sys.setrecursionlimit(10000)
 
-# Import game modules
-from .constants import *
-from . import game_logic
-from .ui_renderer import draw_game_screen, draw_main_menu
+# Import game modules (handle both package and direct imports)
+try:
+    from .constants import *
+    from . import game_logic
+    from .ui_renderer import draw_game_screen, draw_main_menu
+except ImportError:
+    from constants import *
+    import game_logic
+    from ui_renderer import draw_game_screen, draw_main_menu
 
 
 class SudokuGame:
