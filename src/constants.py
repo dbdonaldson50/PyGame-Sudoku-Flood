@@ -36,8 +36,12 @@ UNDO_COLOR = (150, 150, 150)  # Color for undo button
 BUTTON_ORANGE = (255, 140, 0)  # Orange color for remaining digits button
 
 # Font settings
-FONT_NAME = 'ubuntumono'
-FONT_FALLBACK = 'monospace'
+# CRITICAL: Use true monospace fonts to ensure consistent character widths
+# All digits and letters MUST have identical widths for proper alignment
+# Testing shows Courier New provides perfect monospace consistency in Pygame
+FONT_NAME = 'couriernew'          # Primary: Courier New (true monospace)
+FONT_FALLBACK = 'monospace'       # Fallback: Generic monospace
+# Note: ubuntumono has variable widths in Pygame (5-18px), avoid for grid display
 FONT_SIZES = {
     'title': 52,
     'large': 38,

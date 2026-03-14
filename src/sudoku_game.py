@@ -49,20 +49,21 @@ class SudokuGame:
         self.YELLOW = YELLOW
         
         # Try to load Ubuntu Mono font, fallback to monospace
-        # All fonts without bold to ensure consistent character sizing
+        # All fonts without bold and explicitly monospaced for consistent character sizing
+        # Using bold=False and italic=False to ensure uniform rendering
         try:
-            self.title_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['title'])
-            self.large_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['large'])
-            self.medium_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['medium'])
-            self.small_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['small'])
-            self.button_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['button'])
+            self.title_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['title'], bold=False, italic=False)
+            self.large_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['large'], bold=False, italic=False)
+            self.medium_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['medium'], bold=False, italic=False)
+            self.small_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['small'], bold=False, italic=False)
+            self.button_font = pygame.font.SysFont(FONT_NAME, FONT_SIZES['button'], bold=False, italic=False)
         except:
-            # Fallback to monospace
-            self.title_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['title'])
-            self.large_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['large'])
-            self.medium_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['medium'])
-            self.small_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['small'])
-            self.button_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['button'])
+            # Fallback to monospace with same explicit settings
+            self.title_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['title'], bold=False, italic=False)
+            self.large_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['large'], bold=False, italic=False)
+            self.medium_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['medium'], bold=False, italic=False)
+            self.small_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['small'], bold=False, italic=False)
+            self.button_font = pygame.font.SysFont(FONT_FALLBACK, FONT_SIZES['button'], bold=False, italic=False)
         
         # Board settings (will be updated per difficulty)
         self.BOARD_SIZE = 720
@@ -258,13 +259,14 @@ class SudokuGame:
         pencil_slot_size = cell_size / self.box_size
         pencil_size = int(pencil_slot_size * 0.68)  # 68% of slot size for spacing
         
-        # Both fonts without bold to ensure consistent character sizing
+        # Both fonts explicitly non-bold, non-italic for consistent character sizing
+        # Critical: monospace fonts ensure all characters have identical widths
         try:
-            self.cell_font = pygame.font.SysFont(FONT_NAME, font_size)
-            self.pencil_font = pygame.font.SysFont(FONT_NAME, pencil_size)
+            self.cell_font = pygame.font.SysFont(FONT_NAME, font_size, bold=False, italic=False)
+            self.pencil_font = pygame.font.SysFont(FONT_NAME, pencil_size, bold=False, italic=False)
         except:
-            self.cell_font = pygame.font.SysFont(FONT_FALLBACK, font_size)
-            self.pencil_font = pygame.font.SysFont(FONT_FALLBACK, pencil_size)
+            self.cell_font = pygame.font.SysFont(FONT_FALLBACK, font_size, bold=False, italic=False)
+            self.pencil_font = pygame.font.SysFont(FONT_FALLBACK, pencil_size, bold=False, italic=False)
     
     def new_game(self):
         """Start a new game"""
