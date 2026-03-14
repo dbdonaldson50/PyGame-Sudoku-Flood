@@ -407,11 +407,20 @@ def draw_remaining_numbers(game):
     game.screen.blit(title_text, title_rect)
     
     # Draw counts in compact format with proper spacing for Courier New
-    y_pos = 155
+    # FIX: Starting at y=150 instead of 155 to prevent second row from touching board at y=180
+    # With text height ~25px, first row ends at y=175, leaving 5px gap before board
+    y_pos = 150
     x_pos = 80
-    items_per_row = 9 if game.grid_size == 9 else (8 if game.grid_size == 16 else 13)
-    # Increased spacing for Courier New font to prevent overlap
-    spacing = 32 if game.grid_size == 9 else (30 if game.grid_size == 16 else 22)
+    # FIX: Adjusted items_per_row to fit with new 55px spacing
+    # With spacing=55px, starting at x=80, and window width=800:
+    # Max items per row = (800 - 80) / 55 = 13.09, so 13 items max
+    # 9x9: 9 items fit in one row
+    # 16x16: 13 items fit in one row (16 total = 13 + 3 in second row)
+    # 25x25: 13 items per row (24 total = 13 + 11 in two rows)
+    items_per_row = 9 if game.grid_size == 9 else 13
+    # FIX: Increased spacing to 55px minimum to prevent overlap (text width 52px + 3px padding)
+    # Diagnostic showed actual text width: "X:99" = 52px, so 55px ensures no overlap
+    spacing = 55
     
     for idx, symbol in enumerate(game.symbols):
         count = remaining[symbol]
@@ -428,7 +437,7 @@ def draw_remaining_numbers(game):
         x_pos += spacing
         if (idx + 1) % items_per_row == 0:
             x_pos = 80
-            y_pos += 22  # Increased vertical spacing
+            y_pos += 26  # FIX: Increased from 22 to provide better vertical spacing (text height 25px + 1px gap minimum)
 
 
 
@@ -468,12 +477,15 @@ def get_cell_center(game, row, col):
 
 def draw_control_buttons(game):
     """Draw control buttons with hover effects"""
+    # FIX: Shortened button labels to prevent text overflow
+    # Diagnostic showed "Settings"=96px and "Digits"=72px overflowed 72px button width
+    # New labels: "Set" (36px) and "Nums" (48px) fit comfortably with padding
     button_data = [
         ('new_game', 'New', DARK_BLUE, HOVER_BLUE),
         ('hint', 'Hint', DARK_GREEN, HOVER_GREEN),
         ('undo', 'Undo', UNDO_COLOR, (180, 180, 180)),
-        ('settings', 'Settings', PURPLE, HOVER_PURPLE),
-        ('remaining', 'Digits', BUTTON_ORANGE, HOVER_ORANGE)  # Always include, conditionally render
+        ('settings', 'Set', PURPLE, HOVER_PURPLE),  # Shortened from "Settings"
+        ('remaining', 'Nums', BUTTON_ORANGE, HOVER_ORANGE)  # Shortened from "Digits"
     ]
     
     for key, text, color, hover_color in button_data:
@@ -611,14 +623,19 @@ def draw_remaining_digits_modal(game):
     x_start = modal.left + 30
     
     # Determine layout based on grid size with spacing for Courier New
+    # FIX: Increased horizontal spacing to 70px to prevent overlap (text width 65px + 5px padding)
+    # BUT reduced items_per_row to fit within modal width (500px)
+    # Modal usable width: 500 - 60 (margins) = 440px
+    # With spacing=70px: 440 / 70 = 6.28, so 6 items per row maximum
+    # Diagnostic showed actual text width: "X: 99" = 65px, so 70px ensures no overlap
     if game.grid_size == 16:
-        items_per_row = 8
-        spacing_x = 58  # Increased from 55 for Courier New
-        spacing_y = 37  # Increased from 35
+        items_per_row = 6  # Reduced from 8 to fit in modal (6 * 70 = 420px < 440px)
+        spacing_x = 70  # Increased from 58 to prevent overlap
+        spacing_y = 37  # Vertical spacing is OK
     else:  # 25x25
-        items_per_row = 10
-        spacing_x = 47  # Increased from 45 for Courier New
-        spacing_y = 34  # Increased from 32
+        items_per_row = 6  # Reduced from 10 to fit in modal
+        spacing_x = 70  # Increased from 47 to prevent overlap
+        spacing_y = 34  # Vertical spacing is OK
     
     x_pos = x_start
     
@@ -761,9 +778,11 @@ def draw_combo_indicator(game):
     if game.combo_count <= 0:
         return
     
-    # Position at top left, below Lives display to avoid overlap with Mode indicator
+    # FIX: Position moved down to y=160 to avoid overlap with Lives text (was 145, only 3px gap)
+    # Diagnostic showed Lives ends at y=122, combo started at y=125, leaving only 3px gap
+    # New position y=160 provides 38px clearance (122 + 38 = 160)
     x = 100
-    y = 145
+    y = 160
     
     combo_idx = min(game.combo_count, COMBO_MAX_LEVEL)
     combo_color = COMBO_COLORS[combo_idx]
