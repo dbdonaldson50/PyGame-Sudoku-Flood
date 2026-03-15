@@ -193,10 +193,10 @@ class SudokuGame:
         self.buttons['settings_modal'] = pygame.Rect(modal_x, modal_y, modal_width, modal_height)
         self.buttons['settings_close'] = pygame.Rect(modal_x + modal_width - 40, modal_y + 10, 30, 30)
         
-        # Difficulty buttons
+        # Difficulty buttons - increased width to fit text
         diff_y = modal_y + 110
-        diff_width = 100
-        diff_spacing = 20
+        diff_width = 115  # Increased from 100 to accommodate text like "Hard (25x25)"
+        diff_spacing = 15  # Reduced spacing slightly to fit wider buttons
         diff_total_width = diff_width * 3 + diff_spacing * 2
         diff_start_x = modal_x + (modal_width - diff_total_width) // 2
         

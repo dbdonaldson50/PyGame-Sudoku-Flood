@@ -403,13 +403,14 @@ def draw_remaining_numbers(game):
     
     # Draw title
     title_text = game.small_font.render("Remaining:", True, BLACK)
-    title_rect = title_text.get_rect(left=80, top=135)
+    title_rect = title_text.get_rect(left=80, top=130)
     game.screen.blit(title_text, title_rect)
     
     # Draw counts in compact format with proper spacing for Courier New
-    # FIX: Starting at y=150 instead of 155 to prevent second row from touching board at y=180
-    # With text height ~25px, first row ends at y=175, leaving 5px gap before board
-    y_pos = 150
+    # FIX: Starting at y=165 to provide gap after "Remaining:" title (ends ~155)
+    # With text height ~25px and starting at y=165, first row ends at y=190
+    # Second row (if needed) starts at y=191, leaving space before board
+    y_pos = 165
     x_pos = 80
     # FIX: Adjusted items_per_row to fit with new 55px spacing
     # With spacing=55px, starting at x=80, and window width=800:
@@ -477,15 +478,12 @@ def get_cell_center(game, row, col):
 
 def draw_control_buttons(game):
     """Draw control buttons with hover effects"""
-    # FIX: Shortened button labels to prevent text overflow
-    # Diagnostic showed "Settings"=96px and "Digits"=72px overflowed 72px button width
-    # New labels: "Set" (36px) and "Nums" (48px) fit comfortably with padding
     button_data = [
         ('new_game', 'New', DARK_BLUE, HOVER_BLUE),
         ('hint', 'Hint', DARK_GREEN, HOVER_GREEN),
         ('undo', 'Undo', UNDO_COLOR, (180, 180, 180)),
-        ('settings', 'Set', PURPLE, HOVER_PURPLE),  # Shortened from "Settings"
-        ('remaining', 'Nums', BUTTON_ORANGE, HOVER_ORANGE)  # Shortened from "Digits"
+        ('settings', 'Settings', PURPLE, HOVER_PURPLE),
+        ('remaining', 'Remaining', BUTTON_ORANGE, HOVER_ORANGE)
     ]
     
     for key, text, color, hover_color in button_data:
