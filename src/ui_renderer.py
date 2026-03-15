@@ -233,32 +233,30 @@ def draw_game_info(game):
 
 
 def draw_temporary_message(game):
-    """Draw temporary messages as modal-style card (not game over messages)"""
+    """Draw temporary messages as toast notifications (not game over messages)"""
     if game.message and game.message_timer > 0 and not game.game_over:
-        # Draw semi-transparent overlay
-        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-        overlay.set_alpha(100)
-        overlay.fill(BLACK)
-        game.screen.blit(overlay, (0, 0))
-        
-        # Calculate modal dimensions
         lines = game.message.split('\n')
-        max_width = max(game.medium_font.render(line, True, BLACK).get_width() for line in lines)
-        modal_width = min(max_width + 80, WINDOW_WIDTH - 100)
-        modal_height = 80 + len(lines) * 30
-        modal_x = (WINDOW_WIDTH - modal_width) // 2
-        modal_y = (WINDOW_HEIGHT - modal_height) // 2
         
-        # Draw modal card
-        modal_rect = pygame.Rect(modal_x, modal_y, modal_width, modal_height)
-        pygame.draw.rect(game.screen, WHITE, modal_rect, border_radius=15)
-        pygame.draw.rect(game.screen, game.message_color, modal_rect, 4, border_radius=15)
+        # Calculate dimensions for background
+        max_width = max(game.small_font.render(line, True, BLACK).get_width() for line in lines)
+        bg_width = max_width + 40
+        bg_height = 20 + len(lines) * 25
+        bg_x = (WINDOW_WIDTH - bg_width) // 2
+        bg_y = 75  # Position between game info (y=90) and remaining text (y=120)
         
-        # Draw message text centered in modal
-        start_y = modal_y + (modal_height - len(lines) * 30) // 2
+        # Draw semi-transparent background
+        bg_rect = pygame.Rect(bg_x, bg_y, bg_width, bg_height)
+        bg_surface = pygame.Surface((bg_width, bg_height), pygame.SRCALPHA)
+        bg_surface.fill((255, 255, 255, 230))  # White with slight transparency
+        game.screen.blit(bg_surface, (bg_x, bg_y))
+        
+        # Draw border
+        pygame.draw.rect(game.screen, game.message_color, bg_rect, 3, border_radius=8)
+        
+        # Draw message text
         for i, line in enumerate(lines):
-            msg_text = game.medium_font.render(line, True, game.message_color)
-            msg_rect = msg_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + i * 30))
+            msg_text = game.small_font.render(line, True, game.message_color)
+            msg_rect = msg_text.get_rect(center=(WINDOW_WIDTH // 2, bg_y + 10 + i * 25 + 12))
             game.screen.blit(msg_text, msg_rect)
         
         game.message_timer -= 1

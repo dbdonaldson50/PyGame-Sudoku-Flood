@@ -342,7 +342,7 @@ class SudokuGame:
         self.pencil_marks = [[set() for _ in range(self.grid_size)] for _ in range(self.grid_size)]
         
         self.selected_cell = None
-        self.show_message("New game started! Good luck!", self.DARK_BLUE)
+        # No message needed - new game is obvious from board reset
     
     def auto_fill_singles(self, source_cell=None, award_points=True):
         """Auto-fill cells that have only one possible value with combo system"""
