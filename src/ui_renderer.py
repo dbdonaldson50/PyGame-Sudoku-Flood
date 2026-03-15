@@ -233,13 +233,34 @@ def draw_game_info(game):
 
 
 def draw_temporary_message(game):
-    """Draw temporary messages (not game over messages)"""
+    """Draw temporary messages as modal-style card (not game over messages)"""
     if game.message and game.message_timer > 0 and not game.game_over:
+        # Draw semi-transparent overlay
+        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        overlay.set_alpha(100)
+        overlay.fill(BLACK)
+        game.screen.blit(overlay, (0, 0))
+        
+        # Calculate modal dimensions
         lines = game.message.split('\n')
+        max_width = max(game.medium_font.render(line, True, BLACK).get_width() for line in lines)
+        modal_width = min(max_width + 80, WINDOW_WIDTH - 100)
+        modal_height = 80 + len(lines) * 30
+        modal_x = (WINDOW_WIDTH - modal_width) // 2
+        modal_y = (WINDOW_HEIGHT - modal_height) // 2
+        
+        # Draw modal card
+        modal_rect = pygame.Rect(modal_x, modal_y, modal_width, modal_height)
+        pygame.draw.rect(game.screen, WHITE, modal_rect, border_radius=15)
+        pygame.draw.rect(game.screen, game.message_color, modal_rect, 4, border_radius=15)
+        
+        # Draw message text centered in modal
+        start_y = modal_y + (modal_height - len(lines) * 30) // 2
         for i, line in enumerate(lines):
-            msg_text = game.small_font.render(line, True, game.message_color)
-            msg_rect = msg_text.get_rect(center=(WINDOW_WIDTH // 2, 135 + i * 22))
+            msg_text = game.medium_font.render(line, True, game.message_color)
+            msg_rect = msg_text.get_rect(center=(WINDOW_WIDTH // 2, start_y + i * 30))
             game.screen.blit(msg_text, msg_rect)
+        
         game.message_timer -= 1
 
 

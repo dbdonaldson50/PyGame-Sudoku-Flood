@@ -1,3 +1,7 @@
+# Documentation - internal development notes (excluded from repo)
+docs/*
+!docs/DEVELOPMENT.md
+
 # Python
 __pycache__/
 *.py[cod]
