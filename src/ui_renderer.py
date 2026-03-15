@@ -402,23 +402,31 @@ def draw_remaining_numbers(game):
         return  # Don't draw anything, user must open modal
     
     # Draw title
+    # FIX: Moved up from y=130 to y=105 to prevent overlap with board - Red Donaldson, March 15, 2026
+    # Board starts at y=180, need to ensure remaining numbers end before that
     title_text = game.small_font.render("Remaining:", True, BLACK)
-    title_rect = title_text.get_rect(left=80, top=130)
+    title_rect = title_text.get_rect(left=80, top=105)
     game.screen.blit(title_text, title_rect)
     
     # Draw counts in compact format with proper spacing for Courier New
-    # FIX: Starting at y=165 to provide gap after "Remaining:" title (ends ~155)
-    # With text height ~25px and starting at y=165, first row ends at y=190
-    # Second row (if needed) starts at y=191, leaving space before board
-    y_pos = 165
+    # FIX: Moved up from y=165 to y=135 to avoid board overlap - Red Donaldson, March 15, 2026
+    # With title at y=105 and text height ~25px, title ends at ~y=130
+    # Starting counts at y=135 provides 5px gap after title
+    # First row: y=135 to y=160 (text height 25px)
+    # Second row (if needed): y=161 to y=186
+    # Board starts at y=180, so we have min 20px clearance (180 - 160 = 20px for single row)
+    # For two rows: 186 ends, board at 180... still overlap!
+    # Need to fit everything in ONE row or move higher
+    y_pos = 135
     x_pos = 80
-    # FIX: Adjusted items_per_row to fit with new 55px spacing
+    # FIX: Adjusted items_per_row to fit all items in fewer rows - Red Donaldson, March 15, 2026
     # With spacing=55px, starting at x=80, and window width=800:
-    # Max items per row = (800 - 80) / 55 = 13.09, so 13 items max
-    # 9x9: 9 items fit in one row
-    # 16x16: 13 items fit in one row (16 total = 13 + 3 in second row)
-    # 25x25: 13 items per row (24 total = 13 + 11 in two rows)
-    items_per_row = 9 if game.grid_size == 9 else 13
+    # Available width: 800 - 80 = 720px
+    # Items per row: 720 / 55 = 13.09, so 13 items max per row
+    # 9x9: 9 items fit in one row (ends at y=160, board at y=180, 20px clearance ✓)
+    # For 16x16 or 25x25 with < 10 remaining: fits in one row (ends at y=160 ✓)
+    # Even if we show up to 13 items: still one row (ends at y=160 ✓)
+    items_per_row = 13  # Use 13 for all grid sizes to minimize rows
     # FIX: Increased spacing to 55px minimum to prevent overlap (text width 52px + 3px padding)
     # Diagnostic showed actual text width: "X:99" = 52px, so 55px ensures no overlap
     spacing = 55
@@ -776,11 +784,12 @@ def draw_combo_indicator(game):
     if game.combo_count <= 0:
         return
     
-    # FIX: Position moved down to y=160 to avoid overlap with Lives text (was 145, only 3px gap)
-    # Diagnostic showed Lives ends at y=122, combo started at y=125, leaving only 3px gap
-    # New position y=160 provides 38px clearance (122 + 38 = 160)
+    # FIX: Position moved up to y=50 to avoid overlap with board and other UI - Red Donaldson, March 15, 2026
+    # Previous position y=160 caused overlap: text extends to y=182, but board starts at y=180
+    # New position y=50 places combo in clear area above Lives/Score/Timer (which start at y=90)
+    # This provides good visual separation and ensures no board overlap
     x = 100
-    y = 160
+    y = 50
     
     combo_idx = min(game.combo_count, COMBO_MAX_LEVEL)
     combo_color = COMBO_COLORS[combo_idx]

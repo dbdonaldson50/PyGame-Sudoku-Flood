@@ -166,26 +166,42 @@ class SudokuGame:
         
         # Control buttons (New Game, Hint, Undo, Settings, Remaining) - fixed position
         # Note: "Remaining" button is always created but only drawn for large grids (16x16, 25x25)
-        button_width = 72
+        # FIX: Variable button widths to prevent text overflow - Red Donaldson, March 15, 2026
+        button_widths = {
+            'new_game': 72,    # "New" fits comfortably
+            'hint': 72,        # "Hint" fits comfortably
+            'undo': 72,        # "Undo" fits comfortably
+            'settings': 120,   # "Settings" needs 116px, using 120px
+            'remaining': 135   # "Remaining" needs 128px, using 135px
+        }
         button_height = 35
         button_y = 945  # Fixed position at bottom
         spacing = 8
         
-        total_buttons = 5  # Includes Remaining Digits button (always created, conditionally drawn)
-        start_x = (self.WINDOW_WIDTH - (button_width * total_buttons + spacing * (total_buttons - 1))) // 2
+        # Calculate total width with variable button widths
+        total_width = sum(button_widths.values()) + spacing * 4
+        start_x = (self.WINDOW_WIDTH - total_width) // 2
         
-        self.buttons['new_game'] = pygame.Rect(start_x, button_y, button_width, button_height)
-        self.buttons['hint'] = pygame.Rect(start_x + button_width + spacing, button_y, 
-                                      button_width, button_height)
-        self.buttons['undo'] = pygame.Rect(start_x + (button_width + spacing) * 2, button_y,
-                                      button_width, button_height)
-        self.buttons['settings'] = pygame.Rect(start_x + (button_width + spacing) * 3, button_y, 
-                                       button_width, button_height)
-        self.buttons['remaining'] = pygame.Rect(start_x + (button_width + spacing) * 4, button_y,
-                                       button_width, button_height)
+        # Create buttons with appropriate widths
+        curr_x = start_x
+        self.buttons['new_game'] = pygame.Rect(curr_x, button_y, button_widths['new_game'], button_height)
+        curr_x += button_widths['new_game'] + spacing
+        
+        self.buttons['hint'] = pygame.Rect(curr_x, button_y, button_widths['hint'], button_height)
+        curr_x += button_widths['hint'] + spacing
+        
+        self.buttons['undo'] = pygame.Rect(curr_x, button_y, button_widths['undo'], button_height)
+        curr_x += button_widths['undo'] + spacing
+        
+        self.buttons['settings'] = pygame.Rect(curr_x, button_y, button_widths['settings'], button_height)
+        curr_x += button_widths['settings'] + spacing
+        
+        self.buttons['remaining'] = pygame.Rect(curr_x, button_y, button_widths['remaining'], button_height)
         
         # Settings modal buttons
-        modal_width = 400
+        # FIX: Increased modal width and button widths to prevent text overflow - Red Donaldson, March 15, 2026
+        # Med (16x16) needs 163px, Hard (25x25) needs 176px, Check Solution needs 202px
+        modal_width = 600  # Increased from 400 to accommodate wider buttons
         modal_height = 300
         modal_x = (self.WINDOW_WIDTH - modal_width) // 2
         modal_y = (self.WINDOW_HEIGHT - modal_height) // 2
@@ -193,10 +209,10 @@ class SudokuGame:
         self.buttons['settings_modal'] = pygame.Rect(modal_x, modal_y, modal_width, modal_height)
         self.buttons['settings_close'] = pygame.Rect(modal_x + modal_width - 40, modal_y + 10, 30, 30)
         
-        # Difficulty buttons - increased width to fit text
+        # Difficulty buttons - increased width to fit text comfortably
         diff_y = modal_y + 110
-        diff_width = 115  # Increased from 100 to accommodate text like "Hard (25x25)"
-        diff_spacing = 15  # Reduced spacing slightly to fit wider buttons
+        diff_width = 180  # Increased from 115 to 180 to fit "Hard (25x25)" which needs 176px
+        diff_spacing = 15
         diff_total_width = diff_width * 3 + diff_spacing * 2
         diff_start_x = modal_x + (modal_width - diff_total_width) // 2
         
@@ -206,8 +222,9 @@ class SudokuGame:
         self.buttons['hard'] = pygame.Rect(diff_start_x + (diff_width + diff_spacing) * 2, 
                                       diff_y, diff_width, 35)
         
-        # Check button
-        check_width = 140
+        # Check button - wider to fit "Check Solution" text (needs 202px)
+        # FIX: Increased from 140px to 210px - Red Donaldson, March 15, 2026
+        check_width = 210
         check_x = modal_x + (modal_width - check_width) // 2
         self.buttons['check'] = pygame.Rect(check_x, diff_y + 70, check_width, 40)
         
