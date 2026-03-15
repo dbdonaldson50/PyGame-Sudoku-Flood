@@ -395,22 +395,21 @@ def draw_remaining_numbers(game):
         return  # Don't draw anything, user must open modal
     
     # Draw title
-    # FIX: Moved further down to y=140 to prevent overlap with Lives text at y=90 - Red Donaldson, March 15, 2026
+    # FIX: Position to ensure NO overlap with board at y=180 - Red Donaldson, March 15, 2026
     # Lives text at y=90 (height ~25px) ends around y=115
-    # Starting title at y=140 provides clear 25px separation
-    # Board starts at y=180, remaining numbers must end before that
+    # Title at y=120 (height ~25px) ends at y=145, provides 5px gap after Lives
+    # Board starts at y=180, all text MUST end before that
     title_text = game.small_font.render("Remaining:", True, BLACK)
-    title_rect = title_text.get_rect(left=80, top=140)
+    title_rect = title_text.get_rect(left=80, top=120)
     game.screen.blit(title_text, title_rect)
     
     # Draw counts in compact format with proper spacing for Courier New
-    # FIX: Adjusted to y=165 to maintain proper spacing after title move - Red Donaldson, March 15, 2026
-    # With title at y=140 and text height ~25px, title ends at ~y=165
-    # Starting counts at y=165 places them immediately after title
-    # First row: y=165 to y=190 (text height 25px) 
-    # This extends slightly past board start (y=180) but visually acceptable
-    # since board has thick border that creates visual separation
-    y_pos = 165
+    # FIX: Position at y=150 to ensure text never hides below grid - Red Donaldson, March 15, 2026
+    # Title ends at ~y=145, counts at y=150 provide 5px gap
+    # With text height 25px, first row ends at y=175
+    # Board starts at y=180, providing 5px clearance - NO OVERLAP
+    # Verified by scripts/test_board_boundaries.py
+    y_pos = 150
     x_pos = 80
     # FIX: Adjusted items_per_row to fit all items in fewer rows - Red Donaldson, March 15, 2026
     # With spacing=55px, starting at x=80, and window width=800:
