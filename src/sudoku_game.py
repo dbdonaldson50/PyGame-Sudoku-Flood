@@ -222,11 +222,9 @@ class SudokuGame:
         self.buttons['hard'] = pygame.Rect(diff_start_x + (diff_width + diff_spacing) * 2, 
                                       diff_y, diff_width, 35)
         
-        # Check button - wider to fit "Check Solution" text (needs 202px)
-        # FIX: Increased from 140px to 210px - Red Donaldson, March 15, 2026
-        check_width = 210
-        check_x = modal_x + (modal_width - check_width) // 2
-        self.buttons['check'] = pygame.Rect(check_x, diff_y + 70, check_width, 40)
+        # FIX: Removed "Check Solution" button definition - Red Donaldson, March 15, 2026
+        # Button removed from settings modal as it's redundant with instant lives feedback
+        # No longer needed since players get immediate feedback on correct/wrong answers
         
         # Game over modal buttons
         gameover_modal_width = 450
@@ -895,8 +893,9 @@ class SudokuGame:
                     if self.difficulty != 'hard':
                         self.difficulty = 'hard'
                         self.new_game()
-                elif self.buttons['check'].collidepoint(pos):
-                    self.check_solution()
+                # FIX: Removed 'check' button handler - Red Donaldson, March 15, 2026
+                # Check Solution feature removed as redundant with lives system
+                # Players get instant feedback: wrong = lose life, correct = gain points
                 return
             else:
                 self.show_settings = False

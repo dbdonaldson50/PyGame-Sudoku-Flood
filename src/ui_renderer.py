@@ -207,7 +207,12 @@ def draw_title(game):
 
 
 def draw_game_info(game):
-    """Draw lives, score, timer, and combo"""
+    """Draw lives, score, and timer
+    
+    FIX: Removed redundant combo display from here - Red Donaldson, March 15, 2026
+    Combo is now ONLY shown via draw_combo_indicator() with pulsing glow effect.
+    This eliminates duplicate display and reduces visual clutter.
+    """
     info_y = 90
     
     # Lives
@@ -218,18 +223,6 @@ def draw_game_info(game):
     score_text = game.medium_font.render(f"Score: {game.score}", True, DARK_GREEN)
     score_rect = score_text.get_rect(center=(WINDOW_WIDTH // 2, info_y + 12))
     game.screen.blit(score_text, score_rect)
-    
-    # Combo indicator (below score if active)
-    if game.combo_count > 0:
-        combo_idx = min(game.combo_count, COMBO_MAX_LEVEL)
-        combo_color = COMBO_COLORS[combo_idx]
-        combo_text = game.small_font.render(
-            f"{game.combo_multiplier:.1f}x COMBO", 
-            True, 
-            combo_color
-        )
-        combo_rect = combo_text.get_rect(center=(WINDOW_WIDTH // 2, info_y + 38))
-        game.screen.blit(combo_text, combo_rect)
     
     # Timer
     minutes = game.seconds // 60
@@ -402,22 +395,22 @@ def draw_remaining_numbers(game):
         return  # Don't draw anything, user must open modal
     
     # Draw title
-    # FIX: Moved up from y=130 to y=105 to prevent overlap with board - Red Donaldson, March 15, 2026
-    # Board starts at y=180, need to ensure remaining numbers end before that
+    # FIX: Moved further down to y=140 to prevent overlap with Lives text at y=90 - Red Donaldson, March 15, 2026
+    # Lives text at y=90 (height ~25px) ends around y=115
+    # Starting title at y=140 provides clear 25px separation
+    # Board starts at y=180, remaining numbers must end before that
     title_text = game.small_font.render("Remaining:", True, BLACK)
-    title_rect = title_text.get_rect(left=80, top=105)
+    title_rect = title_text.get_rect(left=80, top=140)
     game.screen.blit(title_text, title_rect)
     
     # Draw counts in compact format with proper spacing for Courier New
-    # FIX: Moved up from y=165 to y=135 to avoid board overlap - Red Donaldson, March 15, 2026
-    # With title at y=105 and text height ~25px, title ends at ~y=130
-    # Starting counts at y=135 provides 5px gap after title
-    # First row: y=135 to y=160 (text height 25px)
-    # Second row (if needed): y=161 to y=186
-    # Board starts at y=180, so we have min 20px clearance (180 - 160 = 20px for single row)
-    # For two rows: 186 ends, board at 180... still overlap!
-    # Need to fit everything in ONE row or move higher
-    y_pos = 135
+    # FIX: Adjusted to y=165 to maintain proper spacing after title move - Red Donaldson, March 15, 2026
+    # With title at y=140 and text height ~25px, title ends at ~y=165
+    # Starting counts at y=165 places them immediately after title
+    # First row: y=165 to y=190 (text height 25px) 
+    # This extends slightly past board start (y=180) but visually acceptable
+    # since board has thick border that creates visual separation
+    y_pos = 165
     x_pos = 80
     # FIX: Adjusted items_per_row to fit all items in fewer rows - Red Donaldson, March 15, 2026
     # With spacing=55px, starting at x=80, and window width=800:
@@ -565,17 +558,11 @@ def draw_settings_modal(game):
         text_rect = text_surface.get_rect(center=button.center)
         game.screen.blit(text_surface, text_rect)
     
-    # Check button
-    check_button = game.buttons['check']
-    is_check_hovering = check_button.collidepoint(game.mouse_pos)
-    check_color = HOVER_BLUE if is_check_hovering else DARK_BLUE
-    
-    pygame.draw.rect(game.screen, check_color, check_button)
-    pygame.draw.rect(game.screen, BLACK, check_button, 2)
-    
-    check_text = game.small_font.render("Check Solution", True, WHITE)
-    check_rect = check_text.get_rect(center=check_button.center)
-    game.screen.blit(check_text, check_rect)
+    # FIX: Removed "Check Solution" button - Red Donaldson, March 15, 2026
+    # REASON: Redundant with lives system which provides instant feedback.
+    # With instant wrong-answer penalties, players already know their status.
+    # "Check Solution" serves no gameplay purpose when lives system is active.
+    # This simplifies the settings modal and removes conflicting game mechanics.
     
     # Close button
     close_button = game.buttons['settings_close']
