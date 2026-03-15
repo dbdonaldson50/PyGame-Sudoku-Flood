@@ -956,26 +956,16 @@ class SudokuGame:
             else:
                 char = chr(key)
                 self.handle_cell_input(char)
-        elif key == pygame.K_KP0:
-            self.place_number(0)
-        elif key == pygame.K_KP1:
-            self.place_number(1)
-        elif key == pygame.K_KP2:
-            self.place_number(2)
-        elif key == pygame.K_KP3:
-            self.place_number(3)
-        elif key == pygame.K_KP4:
-            self.place_number(4)
-        elif key == pygame.K_KP5:
-            self.place_number(5)
-        elif key == pygame.K_KP6:
-            self.place_number(6)
-        elif key == pygame.K_KP7:
-            self.place_number(7)
-        elif key == pygame.K_KP8:
-            self.place_number(8)
-        elif key == pygame.K_KP9:
-            self.place_number(9)
+        # Handle keypad input - should behave same as regular number keys
+        elif key in range(pygame.K_KP0, pygame.K_KP9 + 1):
+            # Extract the digit from keypad key
+            digit = key - pygame.K_KP0
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                # For 16x16 and 25x25, convert to character and use handle_cell_input
+                char = str(digit)
+                self.handle_cell_input(char)
         elif key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
             self.place_number(0)
         # Handle character input for 16x16 and 25x25
