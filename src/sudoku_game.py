@@ -457,7 +457,8 @@ class SudokuGame:
         
         for row, col, value in filled_sequence:
             combo_tracker += 1
-            combo_tracker = min(combo_tracker, COMBO_MAX_LEVEL)
+            # Ensure combo_tracker stays within valid bounds [0, COMBO_MAX_LEVEL]
+            combo_tracker = max(0, min(combo_tracker, COMBO_MAX_LEVEL))
             
             # Calculate points with combo multiplier
             multiplier = COMBO_MULTIPLIERS[combo_tracker]
