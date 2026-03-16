@@ -108,6 +108,8 @@ class SudokuGame:
         self.combo_count = 0  # Current combo streak
         self.combo_multiplier = 1.0  # Current multiplier
         self.floating_points = []  # List of (x, y, points, color, timer) tuples
+        self.animation_running_total = 0  # Running total of points during animation
+        self.animation_cells_filled = 0  # Running count of cells filled during animation
         self.cell_flash_effects = []  # List of (row, col, color, timer) tuples
         self.last_action_triggered_combo = False  # Track if last action maintained combo
         
@@ -246,7 +248,7 @@ class SudokuGame:
         
         # Game over modal buttons
         gameover_modal_width = 450
-        gameover_modal_height = 300
+        gameover_modal_height = 350  # Increased to fit buttons without overflow
         gameover_modal_x = (self.WINDOW_WIDTH - gameover_modal_width) // 2
         gameover_modal_y = (self.WINDOW_HEIGHT - gameover_modal_height) // 2
         
@@ -256,13 +258,13 @@ class SudokuGame:
         # New game button in game over modal
         newgame_width = 140
         newgame_x = gameover_modal_x + (gameover_modal_width - newgame_width) // 2
-        self.buttons['gameover_newgame'] = pygame.Rect(newgame_x, gameover_modal_y + 220, 
+        self.buttons['gameover_newgame'] = pygame.Rect(newgame_x, gameover_modal_y + 240, 
                                                         newgame_width, 45)
         
         # Return to Menu button in game over modal
         menu_width = 140
         menu_x = gameover_modal_x + (gameover_modal_width - menu_width) // 2
-        self.buttons['gameover_menu'] = pygame.Rect(menu_x, gameover_modal_y + 220 + 55, 
+        self.buttons['gameover_menu'] = pygame.Rect(menu_x, gameover_modal_y + 240 + 55, 
                                                      menu_width, 45)
         
         # Remaining digits modal (for large grids)
@@ -427,12 +429,10 @@ class SudokuGame:
                     (255, 215, 0)  # Gold for bonuses
                 )
             
-            # Show combo message
-            if self.combo_count > 0:
-                combo_text = f"+{total_points} pts ({filled_count} auto-filled) {self.combo_multiplier:.1f}x COMBO!"
-                self.show_message(combo_text, COMBO_COLORS[min(self.combo_count, COMBO_MAX_LEVEL)])
-            else:
-                self.show_message(f"+{total_points} pts ({filled_count} auto-filled)", self.DARK_BLUE)
+            # Don't show message upfront - it will count up during animation
+            # Reset running totals for animation
+            self.animation_running_total = 0
+            self.animation_cells_filled = 0
             
             # Start animation with visual effects data
             self.start_animation(filled_sequence, source_cell, base_points)
@@ -512,6 +512,17 @@ class SudokuGame:
                 # Add green flash effect
                 flash_type = 'combo' if combo_level > 0 else 'auto_fill'
                 self.add_cell_flash(row, col, flash_type)
+                
+                # Update running totals and show incremental message
+                self.animation_running_total += points
+                self.animation_cells_filled += 1
+                
+                # Show incremental combo message as cells are filled
+                if combo_level > 0:
+                    combo_text = f"+{self.animation_running_total} pts ({self.animation_cells_filled} filled) {COMBO_MULTIPLIERS[combo_level]:.1f}x COMBO!"
+                    self.show_message(combo_text, COMBO_COLORS[combo_level])
+                else:
+                    self.show_message(f"+{self.animation_running_total} pts ({self.animation_cells_filled} filled)", self.DARK_BLUE)
                 
                 # Update laser source to this cell for next animation frame
                 self.laser_source = (row, col)
