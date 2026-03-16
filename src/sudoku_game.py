@@ -101,6 +101,9 @@ class SudokuGame:
         self.show_instructions = False  # Show how to play instructions
         self.show_credits = False  # Show audio credits
         self.show_remaining_digits = False  # Show remaining digits modal for large grids
+        self.show_zoom_modal = False  # Show zoom modal for large grids
+        self.zoom_center_cell = None  # (row, col) of center cell in zoom modal
+        self.zoom_selected_cell = None  # Currently selected cell within zoom modal
         self.mouse_pos = (0, 0)  # Track mouse position for hover effects
         self.game_state = 'menu'  # 'menu' or 'playing'
         
@@ -197,9 +200,9 @@ class SudokuGame:
         button_y = 945  # Fixed position at bottom
         spacing = 8
         
-        # Calculate total width with variable button widths
-        total_width = sum(button_widths.values()) + spacing * 4
-        start_x = (self.WINDOW_WIDTH - total_width) // 2
+        # FIX: Align buttons with text at top (x=80) - Red Donaldson, March 16, 2026
+        # Matches left margin of Lives/Score/Time text for consistent layout
+        start_x = 80
         
         # Create buttons with appropriate widths
         curr_x = start_x
@@ -289,19 +292,32 @@ class SudokuGame:
         self.buttons['credits_close'] = pygame.Rect(credits_modal_x + credits_modal_width - 50,
                                                      credits_modal_y + 10, 40, 40)
         
+        # Zoom modal for large grids (5x5 or 7x7 view of adjacent cells)
+        zoom_modal_width = 600
+        zoom_modal_height = 600
+        zoom_modal_x = (self.WINDOW_WIDTH - zoom_modal_width) // 2
+        zoom_modal_y = (self.WINDOW_HEIGHT - zoom_modal_height) // 2
+        
+        self.buttons['zoom_modal'] = pygame.Rect(zoom_modal_x, zoom_modal_y,
+                                                  zoom_modal_width, zoom_modal_height)
+        self.buttons['zoom_close'] = pygame.Rect(zoom_modal_x + zoom_modal_width - 40,
+                                                  zoom_modal_y + 10, 30, 30)
+        
         # Volume sliders in settings modal (will be added programmatically)
-        slider_y = modal_y + 180
+        # FIX: Adjusted positions to prevent label/slider overlap - Red Donaldson, March 16, 2026
+        # Labels at y=165 and y=210, sliders at y=185 and y=230
+        slider_y = modal_y + 185  # Changed from 180 to give space for label above
         slider_width = 400
         slider_height = 8
         slider_x = modal_x + (modal_width - slider_width) // 2
         
         self.buttons['music_slider'] = pygame.Rect(slider_x, slider_y, slider_width, slider_height)
-        self.buttons['sfx_slider'] = pygame.Rect(slider_x, slider_y + 50, slider_width, slider_height)
+        self.buttons['sfx_slider'] = pygame.Rect(slider_x, slider_y + 45, slider_width, slider_height)
         
-        # Sound toggle button in settings
+        # Sound toggle button in settings - positioned below volume sliders
         sound_toggle_width = 150
         sound_toggle_x = modal_x + (modal_width - sound_toggle_width) // 2
-        self.buttons['sound_toggle'] = pygame.Rect(sound_toggle_x, diff_y + 60, sound_toggle_width, 35)
+        self.buttons['sound_toggle'] = pygame.Rect(sound_toggle_x, modal_y + 260, sound_toggle_width, 35)
     
     def update_cell_font(self):
         """Update cell font size based on grid size with proper spacing"""
@@ -654,6 +670,50 @@ class SudokuGame:
         
         return (row, col)
     
+    def get_zoom_cell_from_pos(self, pos):
+        """Get cell coordinates from mouse position within zoom modal"""
+        if not self.show_zoom_modal or self.zoom_center_cell is None:
+            return None
+        
+        x, y = pos
+        modal = self.buttons['zoom_modal']
+        
+        # Determine zoom grid size (5x5 for 16x16, 7x7 for 25x25)
+        zoom_size = 5 if self.grid_size == 16 else 7
+        
+        # Calculate available space for grid (leave margins for title and close button)
+        grid_area_size = min(modal.width - 40, modal.height - 80)
+        cell_size = grid_area_size // zoom_size
+        
+        # Center the grid in the modal
+        grid_x = modal.centerx - (cell_size * zoom_size) // 2
+        grid_y = modal.top + 60
+        
+        # Check if click is within the grid
+        if x < grid_x or x > grid_x + cell_size * zoom_size:
+            return None
+        if y < grid_y or y > grid_y + cell_size * zoom_size:
+            return None
+        
+        # Calculate which cell in the zoom view was clicked
+        zoom_col = (x - grid_x) // cell_size
+        zoom_row = (y - grid_y) // cell_size
+        
+        # Convert to actual board coordinates
+        center_row, center_col = self.zoom_center_cell
+        offset = zoom_size // 2
+        
+        actual_row = center_row - offset + zoom_row
+        actual_col = center_col - offset + zoom_col
+        
+        # Make sure it's within bounds
+        if actual_row < 0 or actual_row >= self.grid_size:
+            return None
+        if actual_col < 0 or actual_col >= self.grid_size:
+            return None
+        
+        return (actual_row, actual_col)
+    
     def place_number(self, symbol):
         """Place a number in the selected cell or add pencil mark"""
         if self.game_over or self.selected_cell is None:
@@ -713,6 +773,11 @@ class SudokuGame:
             self.add_cell_flash(row, col, 'correct')
             
             auto_filled = self.auto_fill_singles(source_cell=(row, col))
+            
+            # Close zoom modal if flood-fill triggered
+            if auto_filled > 0 and self.show_zoom_modal:
+                self.show_zoom_modal = False
+                self.zoom_selected_cell = None
             
             if auto_filled == 0:
                 # No auto-fill, so show simple message and reset combo
@@ -1069,12 +1134,42 @@ class SudokuGame:
                 self.show_remaining_digits = False
                 return
         
+        if self.show_zoom_modal:
+            # Handle zoom modal
+            if self.buttons['zoom_modal'].collidepoint(pos):
+                if self.buttons['zoom_close'].collidepoint(pos):
+                    self.audio.play_sound('button')
+                    self.show_zoom_modal = False
+                    self.zoom_selected_cell = None
+                    return
+                # Check if clicking on a cell within the zoom modal
+                zoom_cell = self.get_zoom_cell_from_pos(pos)
+                if zoom_cell:
+                    row, col = zoom_cell
+                    if self.initial_board[row][col] is None:
+                        self.zoom_selected_cell = zoom_cell
+                        # Also update main selected cell for consistency
+                        self.selected_cell = zoom_cell
+                    return
+            else:
+                self.show_zoom_modal = False
+                self.zoom_selected_cell = None
+                return
+        
         # Check board cells
         cell = self.get_cell_from_pos(pos)
         if cell:
             row, col = cell
             if self.initial_board[row][col] is None:
-                self.selected_cell = cell
+                # For large grids, open zoom modal instead of just selecting
+                if self.grid_size > 9:
+                    self.zoom_center_cell = cell
+                    self.zoom_selected_cell = cell
+                    self.selected_cell = cell
+                    self.show_zoom_modal = True
+                    self.audio.play_sound('button')
+                else:
+                    self.selected_cell = cell
             return
         
         # Check buttons

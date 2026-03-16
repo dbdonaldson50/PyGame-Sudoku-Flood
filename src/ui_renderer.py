@@ -275,6 +275,10 @@ def draw_game_screen(game):
     if game.show_remaining_digits:
         draw_remaining_digits_modal(game)
     
+    # Draw zoom modal if open
+    if game.show_zoom_modal:
+        draw_zoom_modal(game)
+    
     # Draw game over modal if game is over
     if game.show_win_message or game.show_lose_message:
         draw_game_over_modal(game)
@@ -711,11 +715,12 @@ def draw_settings_modal(game):
     game.screen.blit(sound_text, sound_rect)
     
     # Volume controls
-    volume_y = modal.top + 180
+    # FIX: Labels positioned above sliders to prevent overlap - Red Donaldson, March 16, 2026
+    volume_label_y = modal.top + 165  # Label above slider
     
     # Music volume label and slider
     music_label = game.medium_font.render("Music Volume:", True, BLACK)
-    music_label_rect = music_label.get_rect(midleft=(modal.left + 40, volume_y))
+    music_label_rect = music_label.get_rect(midleft=(modal.left + 40, volume_label_y))
     game.screen.blit(music_label, music_label_rect)
     
     # Draw slider track
@@ -742,9 +747,9 @@ def draw_settings_modal(game):
     game.screen.blit(percent_text, percent_rect)
     
     # SFX volume label and slider
-    sfx_y = volume_y + 50
+    sfx_label_y = modal.top + 210  # Label above slider
     sfx_label = game.medium_font.render("SFX Volume:", True, BLACK)
-    sfx_label_rect = sfx_label.get_rect(midleft=(modal.left + 40, sfx_y))
+    sfx_label_rect = sfx_label.get_rect(midleft=(modal.left + 40, sfx_label_y))
     game.screen.blit(sfx_label, sfx_label_rect)
     
     # Draw slider track
@@ -870,6 +875,170 @@ def draw_remaining_digits_modal(game):
     
     # Close button
     close_button = game.buttons['remaining_close']
+    is_close_hovering = close_button.collidepoint(game.mouse_pos)
+    close_color = HOVER_RED if is_close_hovering else DARK_RED
+    
+    pygame.draw.rect(game.screen, close_color, close_button, border_radius=5)
+    pygame.draw.rect(game.screen, BLACK, close_button, 2, border_radius=5)
+    
+    close_text = game.medium_font.render("X", True, WHITE)
+    close_rect = close_text.get_rect(center=close_button.center)
+    game.screen.blit(close_text, close_rect)
+
+
+def draw_zoom_modal(game):
+    """Draw the zoom modal showing nearby cells for large grids"""
+    if game.zoom_center_cell is None:
+        return
+    
+    modal = game.buttons['zoom_modal']
+    center_row, center_col = game.zoom_center_cell
+    
+    # Draw semi-transparent overlay
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.set_alpha(128)
+    overlay.fill(BLACK)
+    game.screen.blit(overlay, (0, 0))
+    
+    # Draw modal
+    pygame.draw.rect(game.screen, WHITE, modal, border_radius=10)
+    pygame.draw.rect(game.screen, BLACK, modal, 3, border_radius=10)
+    
+    # Title
+    title_text = game.large_font.render("Zoom View", True, PURPLE)
+    title_rect = title_text.get_rect(center=(modal.centerx, modal.top + 30))
+    game.screen.blit(title_text, title_rect)
+    
+    # Determine zoom grid size (5x5 for 16x16, 7x7 for 25x25)
+    zoom_size = 5 if game.grid_size == 16 else 7
+    offset = zoom_size // 2
+    
+    # Calculate grid dimensions
+    grid_area_size = min(modal.width - 40, modal.height - 80)
+    cell_size = grid_area_size // zoom_size
+    
+    # Center the grid in the modal
+    grid_x = modal.centerx - (cell_size * zoom_size) // 2
+    grid_y = modal.top + 60
+    
+    # Draw each cell in the zoom view
+    for zoom_row in range(zoom_size):
+        for zoom_col in range(zoom_size):
+            # Calculate actual board coordinates
+            actual_row = center_row - offset + zoom_row
+            actual_col = center_col - offset + zoom_col
+            
+            # Skip if out of bounds
+            if actual_row < 0 or actual_row >= game.grid_size:
+                continue
+            if actual_col < 0 or actual_col >= game.grid_size:
+                continue
+            
+            # Calculate cell position
+            x = grid_x + zoom_col * cell_size
+            y = grid_y + zoom_row * cell_size
+            rect = pygame.Rect(x, y, cell_size, cell_size)
+            
+            # Determine cell color
+            is_initial = game.initial_board[actual_row][actual_col] is not None
+            is_selected = (game.zoom_selected_cell == (actual_row, actual_col))
+            is_center = (actual_row == center_row and actual_col == center_col)
+            
+            # Draw cell background
+            if is_center:
+                cell_color = YELLOW  # Highlight the center cell
+            elif is_selected:
+                cell_color = BLUE  # Selected cell  
+            elif is_initial:
+                cell_color = LIGHT_GRAY  # Initial cell
+            else:
+                cell_color = WHITE
+            
+            pygame.draw.rect(game.screen, cell_color, rect)
+            pygame.draw.rect(game.screen, BLACK, rect, 2)
+            
+            # Draw cell value or admin mode answer
+            value = game.board[actual_row][actual_col]
+            
+            # Show correct answer in admin mode
+            if game.admin_mode and not is_initial:
+                correct_value = game.solution[actual_row][actual_col]
+                # Use larger font for zoom view
+                font_size = int(cell_size * 0.5)
+                zoom_font = pygame.font.SysFont(FONT_NAME, font_size, bold=False, italic=False)
+                answer_text = zoom_font.render(str(correct_value), True, CYAN)
+                answer_rect = answer_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
+                game.screen.blit(answer_text, answer_rect)
+            
+            if value:
+                # Use larger font for zoom view
+                font_size = int(cell_size * 0.6)
+                zoom_font = pygame.font.SysFont(FONT_NAME, font_size, bold=False, italic=False)
+                value_text = zoom_font.render(str(value), True, BLACK)
+                value_rect = value_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
+                game.screen.blit(value_text, value_rect)
+            elif not is_initial and game.pencil_marks[actual_row][actual_col]:
+                # Draw pencil marks
+                marks = sorted(list(game.pencil_marks[actual_row][actual_col]))
+                pencil_font_size = int(cell_size * 0.2)
+                pencil_font = pygame.font.SysFont(FONT_NAME, pencil_font_size, bold=False, italic=False)
+                
+                # Draw marks in a grid within the cell
+                marks_per_row = 3 if game.grid_size == 16 else 5
+                for idx, mark in enumerate(marks[:min(9, len(marks))]):  # Limit displayed marks
+                    mark_row = idx // marks_per_row
+                    mark_col = idx % marks_per_row
+                    mark_x = x + 5 + mark_col * (cell_size // marks_per_row)
+                    mark_y = y + 5 + mark_row * (cell_size // marks_per_row)
+                    mark_text = pencil_font.render(str(mark), True, GRAY)
+                    game.screen.blit(mark_text, (mark_x, mark_y))
+    
+    # Draw laser animation if active and within zoom view
+    if game.animation_queue and game.laser_source is not None:
+        source_row, source_col = game.laser_source
+        target_row, target_col = game.animation_queue[0][0], game.animation_queue[0][1]
+        
+        # Check if source and target are in the visible zoom area
+        source_in_view = (abs(source_row - center_row) <= offset and 
+                         abs(source_col - center_col) <= offset and
+                         0 <= source_row < game.grid_size and 
+                         0 <= source_col < game.grid_size)
+        target_in_view = (abs(target_row - center_row) <= offset and 
+                         abs(target_col - center_col) <= offset and
+                         0 <= target_row < game.grid_size and 
+                         0 <= target_col < game.grid_size)
+        
+        if source_in_view and target_in_view:
+            # Calculate zoom cell coordinates
+            source_zoom_row = source_row - (center_row - offset)
+            source_zoom_col = source_col - (center_col - offset)
+            target_zoom_row = target_row - (center_row - offset)
+            target_zoom_col = target_col - (center_col - offset)
+            
+            # Calculate pixel positions within zoom modal
+            source_x = grid_x + source_zoom_col * cell_size + cell_size // 2
+            source_y = grid_y + source_zoom_row * cell_size + cell_size // 2
+            target_x = grid_x + target_zoom_col * cell_size + cell_size // 2
+            target_y = grid_y + target_zoom_row * cell_size + cell_size // 2
+            
+            # Draw laser with animation progress
+            progress = game.current_animation_frame / game.animation_speed
+            laser_x = source_x + (target_x - source_x) * progress
+            laser_y = source_y + (target_y - source_y) * progress
+            
+            laser_color = (100, 200, 255)
+            glow_color = (150, 220, 255)
+            
+            pygame.draw.line(game.screen, glow_color, (source_x, source_y), 
+                           (laser_x, laser_y), 8)
+            pygame.draw.line(game.screen, laser_color, (source_x, source_y), 
+                           (laser_x, laser_y), 4)
+            
+            pygame.draw.circle(game.screen, WHITE, (int(laser_x), int(laser_y)), 6)
+            pygame.draw.circle(game.screen, laser_color, (int(laser_x), int(laser_y)), 4)
+    
+    # Close button
+    close_button = game.buttons['zoom_close']
     is_close_hovering = close_button.collidepoint(game.mouse_pos)
     close_color = HOVER_RED if is_close_hovering else DARK_RED
     
