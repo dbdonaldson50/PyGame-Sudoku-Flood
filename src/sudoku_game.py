@@ -155,9 +155,9 @@ class SudokuGame:
                                                       start_y + (button_height + button_spacing) * 3 + 20,
                                                       howto_width, howto_height)
         
-        # Instruction modal
+        # Instruction modal - increased height to fit all instructions
         modal_width = 600
-        modal_height = 500
+        modal_height = 600  # Increased from 500 to fit all instruction text
         modal_x = (self.WINDOW_WIDTH - modal_width) // 2
         modal_y = (self.WINDOW_HEIGHT - modal_height) // 2
         

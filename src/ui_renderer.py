@@ -135,7 +135,7 @@ def draw_instructions_modal(game):
             text_surface = game.small_font.render(line, True, BLACK)
             text_rect = text_surface.get_rect(left=modal.left + 30, top=y_offset)
             game.screen.blit(text_surface, text_rect)
-        y_offset += 22
+        y_offset += 24  # Slightly increased spacing for better readability
     
     # Close button
     close_button = game.buttons['instructions_close']
