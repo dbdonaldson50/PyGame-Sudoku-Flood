@@ -277,7 +277,7 @@ class SudokuGame:
                                                        remaining_modal_y + 10, 30, 30)
         
         # Credits modal
-        credits_modal_width = 700
+        credits_modal_width = 750  # Widened to prevent horizontal text overflow
         credits_modal_height = 600
         credits_modal_x = (self.WINDOW_WIDTH - credits_modal_width) // 2
         credits_modal_y = (self.WINDOW_HEIGHT - credits_modal_height) // 2
