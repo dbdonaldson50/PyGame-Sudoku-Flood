@@ -16,47 +16,63 @@ import copy
 
 
 def generate_complete_sudoku(grid_size, box_size, symbols):
-    """Generate a complete valid Sudoku board using highly optimized algorithm
+    """Generate a complete valid Sudoku board using simple backtracking algorithm
     
-    Strategy:
-    1. Pre-fill diagonal boxes (independent, fast)
-    2. Fill first row (constrains column choices)
-    3. Fill first column (constrains row choices)
-    4. Use MRV heuristic with constraint propagation for rest
+    Modified by: Red Donaldson
+    Date: March 16, 2026
     
-    This approach dramatically reduces search space and backtracking
+    CHANGE: Replaced complex optimized algorithm with simple proven algorithm
+    REASON: Optimized version had bugs causing invalid boards for 25x25 grids
+    OPTIMIZATION: Pre-fill diagonal boxes to speed up generation significantly
+    
+    The optimized algorithm attempted to use:
+    - Pre-filled diagonal boxes
+    - Constraint caching
+    - MRV heuristic
+    - Constraint propagation
+    
+    However, it had race conditions in constraint tracking that caused
+    duplicate symbols in rows/columns/boxes. This simple algorithm is
+    slower but cannot produce invalid boards.
+    
+    Performance optimization: Pre-filling diagonal boxes is safe because
+    diagonal boxes don't share rows, columns, or boxes with each other.
+    This reduces the search space dramatically without introducing bugs.
     """
     board = [[None for _ in range(grid_size)] for _ in range(grid_size)]
     
-    # Initialize constraint tracking sets for O(1) lookups
-    symbols_set = set(symbols)
-    row_constraints = [set() for _ in range(grid_size)]
-    col_constraints = [set() for _ in range(grid_size)]
-    box_constraints = [set() for _ in range(grid_size)]
+    # Pre-fill diagonal boxes (safe optimization)
+    _prefill_diagonal_boxes(board, grid_size, box_size, symbols)
     
-    # Pre-fill diagonal boxes (they don't constrain each other)
-    _fill_diagonal_boxes(board, grid_size, box_size, symbols, 
-                         row_constraints, col_constraints, box_constraints)
+    if _fill_board_simple(board, grid_size, box_size, symbols, 0, 0):
+        return board
     
-    # Fill first row (provides strong column constraints)
-    if not _fill_first_row(board, grid_size, box_size, symbols_set,
-                           row_constraints, col_constraints, box_constraints):
-        # Retry with fresh board if first row fails
-        return generate_complete_sudoku(grid_size, box_size, symbols)
+    # This should never happen
+    raise Exception("Failed to generate valid Sudoku board")
+
+
+def _prefill_diagonal_boxes(board, grid_size, box_size, symbols):
+    """Pre-fill diagonal boxes - they're independent so this is always safe
     
-    # Fill first column (provides strong row constraints)
-    if not _fill_first_column(board, grid_size, box_size, symbols_set,
-                              row_constraints, col_constraints, box_constraints):
-        # Retry with fresh board if first column fails
-        return generate_complete_sudoku(grid_size, box_size, symbols)
+    Diagonal boxes don't share any rows, columns, or boxes with each other,
+    so we can fill them independently without constraint conflicts.
+    This dramatically speeds up generation for large grids.
+    """
+    num_boxes = grid_size // box_size
     
-    # Fill remaining cells with optimized backtracking
-    if not _fill_remaining(board, grid_size, box_size, symbols_set,
-                          row_constraints, col_constraints, box_constraints):
-        # Retry if filling fails (rare with this approach)
-        return generate_complete_sudoku(grid_size, box_size, symbols)
-    
-    return board
+    for box_num in range(num_boxes):
+        # Shuffle symbols for randomness
+        shuffled_symbols = symbols.copy()
+        random.shuffle(shuffled_symbols)
+        
+        # Fill this diagonal box
+        box_start = box_num * box_size
+        symbol_idx = 0
+        
+        for i in range(box_start, box_start + box_size):
+            for j in range(box_start, box_start + box_size):
+                board[i][j] = shuffled_symbols[symbol_idx]
+                symbol_idx += 1
 
 
 def _fill_first_row(board, grid_size, box_size, symbols_set,
@@ -314,6 +330,81 @@ def fill_board(board, grid_size, box_size, symbols, row=0, col=0):
         if is_valid_placement(board, row, col, symbol, grid_size, box_size):
             board[row][col] = symbol
             if fill_board(board, grid_size, box_size, symbols, row, col + 1):
+                return True
+            board[row][col] = None
+    
+    return False
+
+
+def _validate_board(board, grid_size, box_size):
+    """Validate that a complete board has no duplicates in rows, columns, or boxes
+    
+    Added by: Red Donaldson
+    Date: March 16, 2026
+    """
+    # Check rows
+    for row in range(grid_size):
+        row_values = [board[row][col] for col in range(grid_size)]
+        if len(row_values) != len(set(row_values)):
+            return False
+    
+    # Check columns
+    for col in range(grid_size):
+        col_values = [board[row][col] for row in range(grid_size)]
+        if len(col_values) != len(set(col_values)):
+            return False
+    
+    # Check boxes
+    num_boxes = grid_size // box_size
+    for box_row in range(num_boxes):
+        for box_col in range(num_boxes):
+            box_values = []
+            box_start_row = box_row * box_size
+            box_start_col = box_col * box_size
+            
+            for i in range(box_start_row, box_start_row + box_size):
+                for j in range(box_start_col, box_start_col + box_size):
+                    box_values.append(board[i][j])
+            
+            if len(box_values) != len(set(box_values)):
+                return False
+    
+    return True
+
+
+def _generate_complete_sudoku_fallback(grid_size, box_size, symbols):
+    """Fallback generator using simpler algorithm - slower but guaranteed correct
+    
+    Added by: Red Donaldson
+    Date: March 16, 2026
+    """
+    board = [[None for _ in range(grid_size)] for _ in range(grid_size)]
+    
+    if _fill_board_simple(board, grid_size, box_size, symbols, 0, 0):
+        return board
+    
+    # This should never happen, but just in case
+    raise Exception("Failed to generate valid Sudoku board")
+
+
+def _fill_board_simple(board, grid_size, box_size, symbols, row, col):
+    """Simple recursive backtracking to fill board - guaranteed to work"""
+    if row == grid_size:
+        return True
+    if col == grid_size:
+        return _fill_board_simple(board, grid_size, box_size, symbols, row + 1, 0)
+    
+    # Skip if cell already filled
+    if board[row][col] is not None:
+        return _fill_board_simple(board, grid_size, box_size, symbols, row, col + 1)
+    
+    symbols_copy = symbols.copy()
+    random.shuffle(symbols_copy)
+    
+    for symbol in symbols_copy:
+        if is_valid_placement(board, row, col, symbol, grid_size, box_size):
+            board[row][col] = symbol
+            if _fill_board_simple(board, grid_size, box_size, symbols, row, col + 1):
                 return True
             board[row][col] = None
     
