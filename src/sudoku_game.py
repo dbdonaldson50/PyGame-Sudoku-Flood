@@ -156,7 +156,7 @@ class SudokuGame:
                                                       howto_width, howto_height)
         
         # Instruction modal - increased height to fit all instructions with proper spacing
-        modal_width = 600
+        modal_width = 700  # Widened to prevent horizontal text overflow
         modal_height = 650  # Increased to accommodate text height + spacing
         modal_x = (self.WINDOW_WIDTH - modal_width) // 2
         modal_y = (self.WINDOW_HEIGHT - modal_height) // 2
