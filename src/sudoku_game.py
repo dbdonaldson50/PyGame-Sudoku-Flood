@@ -956,16 +956,67 @@ class SudokuGame:
             else:
                 char = chr(key)
                 self.handle_cell_input(char)
-        # Handle keypad input - should behave same as regular number keys
-        elif key in range(pygame.K_KP0, pygame.K_KP9 + 1):
-            # Extract the digit from keypad key
-            digit = key - pygame.K_KP0
+        # Handle keypad input - keypad constants are NOT sequential, so check individually
+        elif key == pygame.K_KP0:
+            digit = 0
             if self.grid_size == 9:
                 self.place_number(digit)
             else:
-                # For 16x16 and 25x25, convert to character and use handle_cell_input
-                char = str(digit)
-                self.handle_cell_input(char)
+                self.handle_cell_input(str(digit))
+        elif key == pygame.K_KP1:
+            digit = 1
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                self.handle_cell_input(str(digit))
+        elif key == pygame.K_KP2:
+            digit = 2
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                self.handle_cell_input(str(digit))
+        elif key == pygame.K_KP3:
+            digit = 3
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                self.handle_cell_input(str(digit))
+        elif key == pygame.K_KP4:
+            digit = 4
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                self.handle_cell_input(str(digit))
+        elif key == pygame.K_KP5:
+            digit = 5
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                self.handle_cell_input(str(digit))
+        elif key == pygame.K_KP6:
+            digit = 6
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                self.handle_cell_input(str(digit))
+        elif key == pygame.K_KP7:
+            digit = 7
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                self.handle_cell_input(str(digit))
+        elif key == pygame.K_KP8:
+            digit = 8
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                self.handle_cell_input(str(digit))
+        elif key == pygame.K_KP9:
+            digit = 9
+            if self.grid_size == 9:
+                self.place_number(digit)
+            else:
+                self.handle_cell_input(str(digit))
         elif key in [pygame.K_BACKSPACE, pygame.K_DELETE]:
             self.place_number(0)
         # Handle character input for 16x16 and 25x25
