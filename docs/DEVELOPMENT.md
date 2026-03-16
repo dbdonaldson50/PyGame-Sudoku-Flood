@@ -1,6 +1,6 @@
 # Sudoku Flash - Development Documentation
 **Author:** Red Donaldson  
-**Last Updated:** March 15, 2026
+**Last Updated:** March 16, 2026
 
 ## Project Overview
 
@@ -9,6 +9,8 @@ Sudoku Flash is a PyGame-based Sudoku game with three difficulty levels (9x9, 16
 - Combo multiplier system with visual effects
 - Sequential flood-fill animation
 - 180° rotational puzzle symmetry
+- Admin mode (Ctrl+Shift+A shows correct values)
+- Audio system with music and sound effects
 - Comprehensive test coverage (80%+)
 
 ---
@@ -76,10 +78,13 @@ src/
   ├── sudoku_game.py      # Main game class and logic
   ├── ui_renderer.py      # All rendering separated from logic
   ├── constants.py        # Configuration constants
-  └── puzzle_generator.py # Puzzle generation with symmetry
+  ├── game_logic.py       # Puzzle generation with symmetry
+  └── audio_manager.py    # Audio system for music and SFX
   
 tests/
-  └── test_*.py          # Comprehensive test suites
+  ├── test_*.py           # Comprehensive test suites
+  ├── test_admin_mode.py  # Admin mode feature tests
+  └── test_audio_manager.py # Audio system tests
   
 scripts/
   └── *.py               # Verification and diagnostic tools
@@ -90,12 +95,27 @@ scripts/
 **Puzzle Generation**
 - 180° rotational symmetry
 - Configurable difficulty (clues per grid size)
-- Located in `puzzle_generator.py`
+- Located in `game_logic.py`
 
 **Animation System**
 - Sequential flood-fill (laser → fill → flash → next)
 - Per-cell score/combo storage
 - Green flash effects on cell completion
+
+**Admin Mode** (Ctrl+Shift+A)
+- Shows correct values in cyan for all empty cells
+- Visual indicator in top-right corner
+- Helps with debugging and testing
+- Can be toggled on/off anytime during gameplay
+- Resets to OFF when starting new game
+
+**Audio System**
+- Background music with looping
+- Sound effects: correct, wrong, hint, undo, button, win, combo
+- Volume controls (0-100%) for music and SFX separately
+- Settings persistence across sessions
+- Graceful fallback if audio files missing
+- See `AUDIO_DOWNLOAD_GUIDE.md` for audio file setup
 
 **Button System**
 - Variable widths to accommodate text
@@ -131,13 +151,27 @@ source .venv/bin/activate
 pytest tests/
 
 # Verify UI boundaries
-python scripts/test_board_boundaries.py
+pytImplemented Features
 
-# Check test coverage
-pytest --cov=src tests/
-```
+✅ **Complete Features:**
+- Admin mode showing correct values (Ctrl+Shift+A)
+- Audio system with music and sound effects
+- Volume controls with persistence
+- Audio credits and attribution system
+- Instructions modal (700x650px)
+- Keypad support for all grid sizes
+- Toast notifications and message display
+- Remaining numbers modal for large grids
 
----
+## Future Considerations
+
+- Additional grid sizes (12x12, 20x20)
+- Difficulty presets with varying clue counts
+- Theme customization (color schemes)
+- High score persistence and leaderboard
+- Save/load game state
+- Hints system improvements
+- Online multiplayer support
 
 ## Design Principles
 

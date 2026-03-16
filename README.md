@@ -4,7 +4,7 @@ A feature-rich desktop Sudoku game with modern UI, multiple grid sizes, and adva
 
 **Author:** Red Donaldson  
 **Version:** 2.0.0  
-**Date:** March 14, 2026
+**Date:** March 16, 2026
 
 ---
 
@@ -45,6 +45,7 @@ python3 sudoku_flash.py
 - **Smart Auto-Fill**: Automatically fills cells with only one possible value
 - **Laser Animation**: Visual cascade effect showing auto-fill progression
 - **Points & Lives System**: Track your performance with scoring
+- **Combo Multipliers**: Build streaks of correct answers for bonus points
 - **Undo Functionality**: Revert your last move (Ctrl+Z or Cmd+Z)
 
 ### 🎨 User Interface
@@ -54,6 +55,15 @@ python3 sudoku_flash.py
 - **Pencil Marks**: Toggle temporary notes in cells (P key)
 - **Keyboard Controls**: Full keyboard navigation and input
 - **Responsive Feedback**: Visual indicators for valid/invalid moves
+- **Admin Mode**: Toggle correct value display with Ctrl+Shift+A (debugging/testing)
+
+### 🎵 Audio System
+- **Background Music**: Optional looping background music
+- **Sound Effects**: Correct, wrong, hint, undo, button, win, and combo sounds
+- **Volume Controls**: Separate sliders for music (0-100%) and sound effects (0-100%)
+- **Sound Toggle**: Quick ON/OFF button in settings
+- **Audio Credits**: Full attribution for all audio sources (see CREDITS.md)
+- **Graceful Fallback**: Works without audio files (see AUDIO_DOWNLOAD_GUIDE.md)
 
 ### ⌨️ Controls
 - **Mouse**: Click cells and buttons
@@ -62,6 +72,7 @@ python3 sudoku_flash.py
 - **P**: Toggle pencil mark mode
 - **Delete/Backspace**: Clear cell
 - **Ctrl/Cmd+Z**: Undo last move
+- **Ctrl+Shift+A**: Toggle admin mode (shows correct values)
 - **Escape**: Close settings
 
 ### 🎯 Scoring System
