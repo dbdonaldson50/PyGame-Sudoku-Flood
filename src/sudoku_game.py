@@ -166,7 +166,7 @@ class SudokuGame:
                                                       howto_width, howto_height)
         
         # Credits button
-        credits_width = 200
+        credits_width = 240  # Widened to fit "Audio Credits" text (222px + margins)
         credits_height = 50
         self.buttons['menu_credits'] = pygame.Rect(center_x - credits_width // 2,
                                                     start_y + (button_height + button_spacing) * 3 + 80,
