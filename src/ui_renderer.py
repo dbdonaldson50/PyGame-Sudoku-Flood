@@ -5,6 +5,7 @@ Date: March 13, 2026
 """
 
 import pygame
+import math
 
 # Handle both package and direct imports
 try:
@@ -281,11 +282,36 @@ def draw_game_screen(game):
     pygame.display.flip()
 
 
+def draw_star(screen, x, y, size, color):
+    """Draw a 5-pointed star at the given position"""
+    points = []
+    for i in range(10):
+        angle = math.pi / 2 + (2 * math.pi * i / 10)
+        radius = size if i % 2 == 0 else size / 2.5
+        px = x + radius * math.cos(angle)
+        py = y - radius * math.sin(angle)
+        points.append((px, py))
+    pygame.draw.polygon(screen, color, points)
+    pygame.draw.polygon(screen, BLACK, points, 2)  # Outline
+
+
 def draw_title(game):
     """Draw the game title"""
     title_text = game.title_font.render("Sudoku Flash", True, PURPLE)
     title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2, 40))
     game.screen.blit(title_text, title_rect)
+    
+    # Draw star icon if admin mode is active
+    if game.admin_mode:
+        star_x = title_rect.right + 15
+        star_y = title_rect.centery
+        draw_star(game.screen, star_x, star_y, 15, CYAN)
+    
+    # Draw star icon if admin mode is active
+    if game.admin_mode:
+        star_x = title_rect.right + 15
+        star_y = title_rect.centery
+        draw_star(game.screen, star_x, star_y, 15, CYAN)
 
 
 def draw_game_info(game):
@@ -483,19 +509,7 @@ def draw_pencil_mode_indicator(game):
     text_rect = text.get_rect(right=WINDOW_WIDTH - 80, top=135)
     game.screen.blit(text, text_rect)
     
-    # Draw admin mode indicator if active
-    if game.admin_mode:
-        admin_text = "[Ctrl+Shift+A] ADMIN MODE"
-        admin_color = CYAN
-        admin_surface = game.small_font.render(admin_text, True, admin_color)
-        admin_rect = admin_surface.get_rect(right=WINDOW_WIDTH - 80, top=160)
-        
-        # Draw a background box for emphasis
-        bg_rect = admin_rect.inflate(10, 4)
-        pygame.draw.rect(game.screen, (230, 255, 255), bg_rect, border_radius=5)
-        pygame.draw.rect(game.screen, CYAN, bg_rect, 2, border_radius=5)
-        
-        game.screen.blit(admin_surface, admin_rect)
+    # Admin mode indicator is now shown as a star next to the title
 
 
 def draw_remaining_numbers(game):

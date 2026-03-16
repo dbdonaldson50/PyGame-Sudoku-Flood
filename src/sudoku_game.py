@@ -688,6 +688,9 @@ class SudokuGame:
             points = self.difficulty_settings[self.difficulty]['points_per_cell']
             self.score += points
             
+            # Play correct sound
+            self.audio.play_sound('correct')
+            
             # Add visual feedback
             self.add_floating_points(
                 self.BOARD_X + col * (self.BOARD_SIZE // self.grid_size) + (self.BOARD_SIZE // self.grid_size) // 2,
@@ -709,6 +712,10 @@ class SudokuGame:
         else:
             self.lives -= 1
             self.reset_combo()  # Wrong move resets combo
+            
+            # Play wrong sound
+            self.audio.play_sound('wrong')
+            
             self.show_message("Wrong! -1 life", self.DARK_RED)
             
             if self.lives <= 0:
