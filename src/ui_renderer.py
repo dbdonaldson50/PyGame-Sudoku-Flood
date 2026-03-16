@@ -129,13 +129,13 @@ def draw_instructions_modal(game):
         "• Hints cost 10 points",
     ]
     
-    y_offset = modal.top + 90
+    y_offset = modal.top + 80  # Reduced from 90 to give more space
     for line in instructions:
         if line:
             text_surface = game.small_font.render(line, True, BLACK)
             text_rect = text_surface.get_rect(left=modal.left + 30, top=y_offset)
             game.screen.blit(text_surface, text_rect)
-        y_offset += 24  # Slightly increased spacing for better readability
+        y_offset += 26  # Spacing to accommodate text height (~25px) + gap
     
     # Close button
     close_button = game.buttons['instructions_close']
