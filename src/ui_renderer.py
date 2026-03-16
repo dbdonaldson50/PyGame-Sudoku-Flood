@@ -286,6 +286,115 @@ def draw_game_screen(game):
     pygame.display.flip()
 
 
+def draw_generation_screen(game):
+    """Draw the board generation progress screen with spinner
+    
+    Added by: Red Donaldson
+    Date: March 16, 2026
+    """
+    # Fill with dimmed background
+    game.screen.fill(WHITE)
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.set_alpha(200)  # More transparent to see board being filled
+    overlay.fill((240, 240, 240))
+    game.screen.blit(overlay, (0, 0))
+    
+    # Draw title
+    title_text = game.title_font.render("Sudoku Flash", True, PURPLE)
+    title_rect = title_text.get_rect(center=(WINDOW_WIDTH // 2, 40))
+    game.screen.blit(title_text, title_rect)
+    
+    # Draw "Generating Puzzle..." text
+    gen_text = game.large_font.render("Generating Puzzle...", True, BLACK)
+    gen_rect = gen_text.get_rect(center=(WINDOW_WIDTH // 2, 100))
+    game.screen.blit(gen_text, gen_rect)
+    
+    # Draw progress bar
+    bar_width = 400
+    bar_height = 20
+    bar_x = (WINDOW_WIDTH - bar_width) // 2
+    bar_y = 130
+    
+    # Background bar
+    pygame.draw.rect(game.screen, GRAY, (bar_x, bar_y, bar_width, bar_height), border_radius=10)
+    
+    # Filled portion
+    fill_width = int(bar_width * game.generation_progress)
+    if fill_width > 0:
+        pygame.draw.rect(game.screen, DARK_GREEN, (bar_x, bar_y, fill_width, bar_height), border_radius=10)
+    
+    # Border
+    pygame.draw.rect(game.screen, BLACK, (bar_x, bar_y, bar_width, bar_height), 2, border_radius=10)
+    
+    # Progress percentage
+    percent_text = game.medium_font.render(f"{int(game.generation_progress * 100)}%", True, BLACK)
+    percent_rect = percent_text.get_rect(center=(WINDOW_WIDTH // 2, bar_y + bar_height + 25))
+    game.screen.blit(percent_text, percent_rect)
+    
+    # Draw the partial board being generated
+    if game.generation_board:
+        board_size = min(game.BOARD_SIZE, 500)  # Limit size for visibility
+        board_x = (WINDOW_WIDTH - board_size) // 2
+        board_y = 200
+        cell_size = board_size // game.grid_size
+        
+        for i in range(game.grid_size):
+            for j in range(game.grid_size):
+                x = board_x + j * cell_size
+                y = board_y + i * cell_size
+                rect = pygame.Rect(x, y, cell_size, cell_size)
+                
+                # Draw cell background
+                if game.generation_board[i][j] is not None:
+                    pygame.draw.rect(game.screen, LIGHT_GRAY, rect)
+                else:
+                    pygame.draw.rect(game.screen, WHITE, rect)
+                
+                # Draw cell border
+                pygame.draw.rect(game.screen, BLACK, rect, 1)
+                
+                # Draw cell value if filled
+                if game.generation_board[i][j] is not None:
+                    font_size = max(10, int(cell_size * 0.5))
+                    gen_font = pygame.font.SysFont(FONT_NAME, font_size, bold=False, italic=False)
+                    value_text = gen_font.render(str(game.generation_board[i][j]), True, DARK_GREEN)
+                    value_rect = value_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
+                    game.screen.blit(value_text, value_rect)
+        
+        # Draw thicker box borders
+        box_size = game.box_size
+        for i in range(0, game.grid_size + 1, box_size):
+            # Horizontal lines
+            pygame.draw.line(game.screen, BLACK,
+                           (board_x, board_y + i * cell_size),
+                           (board_x + board_size, board_y + i * cell_size), 3)
+            # Vertical lines
+            pygame.draw.line(game.screen, BLACK,
+                           (board_x + i * cell_size, board_y),
+                           (board_x + i * cell_size, board_y + board_size), 3)
+    
+    # Draw spinning loading indicator
+    spinner_x = WINDOW_WIDTH // 2
+    spinner_y = 750
+    spinner_radius = 20
+    
+    # Draw spinner circle segments
+    import math
+    num_segments = 12
+    for i in range(num_segments):
+        angle = math.radians(game.generation_spinner_angle + i * 30)
+        start_x = spinner_x + int(spinner_radius * 0.6 * math.cos(angle))
+        start_y = spinner_y + int(spinner_radius * 0.6 * math.sin(angle))
+        end_x = spinner_x + int(spinner_radius * math.cos(angle))
+        end_y = spinner_y + int(spinner_radius * math.sin(angle))
+        
+        # Fade out older segments
+        alpha = 255 - (i * 20)
+        if alpha > 0:
+            color = (alpha, alpha, alpha)
+            pygame.draw.line(game.screen, color, (start_x, start_y), (end_x, end_y), 3)
+
+
 def draw_star(screen, x, y, size, color):
     """Draw a 5-pointed star at the given position"""
     points = []

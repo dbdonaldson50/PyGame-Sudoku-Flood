@@ -107,6 +107,12 @@ class SudokuGame:
         self.mouse_pos = (0, 0)  # Track mouse position for hover effects
         self.game_state = 'menu'  # 'menu' or 'playing'
         
+        # Board generation state
+        self.generating_board = False  # True while generating a new board
+        self.generation_board = None  # Partial board being generated
+        self.generation_progress = 0.0  # 0.0 to 1.0
+        self.generation_spinner_angle = 0  # Spinner animation angle
+        
         # Enhanced Scoring System
         self.combo_count = 0  # Current combo streak
         self.combo_multiplier = 1.0  # Current multiplier
@@ -390,10 +396,36 @@ class SudokuGame:
         # Update cell font
         self.update_cell_font()
         
+        # Generate puzzle with visual feedback
+        self.generating_board = True
+        self.generation_board = [[None for _ in range(self.grid_size)] for _ in range(self.grid_size)]
+        self.generation_progress = 0.0
+        self.generation_spinner_angle = 0
+        
+        # Define progress callback
+        def progress_callback(board, progress):
+            self.generation_board = copy.deepcopy(board)
+            self.generation_progress = progress
+            self.generation_spinner_angle = (self.generation_spinner_angle + 10) % 360
+            
+            # Render the generation screen
+            from ui_renderer import draw_generation_screen
+            draw_generation_screen(self)
+            pygame.display.flip()
+            
+            # Process events to keep UI responsive
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+        
         # Generate puzzle
         self.solution = game_logic.generate_complete_sudoku(
-            self.grid_size, self.box_size, self.symbols
+            self.grid_size, self.box_size, self.symbols, progress_callback
         )
+        
+        self.generating_board = False
+        
         self.board = copy.deepcopy(self.solution)
         game_logic.remove_numbers(
             self.board, self.grid_size, settings['cells_to_remove']

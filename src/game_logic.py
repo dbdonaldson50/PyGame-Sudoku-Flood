@@ -15,15 +15,22 @@ import random
 import copy
 
 
-def generate_complete_sudoku(grid_size, box_size, symbols):
+def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=None):
     """Generate a complete valid Sudoku board using simple backtracking algorithm
     
     Modified by: Red Donaldson
     Date: March 16, 2026
     
     CHANGE: Replaced complex optimized algorithm with simple proven algorithm
-    REASON: Optimized version had bugs causing invalid boards for 25x25 grids
+    REASON: Optimized version had bugs causing invalid boards for 25x25 grids  
     OPTIMIZATION: Pre-fill diagonal boxes to speed up generation significantly
+    VISUAL FEEDBACK: Added progress_callback for UI updates during generation
+    
+    Args:
+        grid_size: Size of the grid (9, 16, or 25)
+        box_size: Size of each box (3, 4, or 5)
+        symbols: List of symbols to use
+        progress_callback: Optional function(board, progress) called periodically
     
     The optimized algorithm attempted to use:
     - Pre-filled diagonal boxes
@@ -44,7 +51,24 @@ def generate_complete_sudoku(grid_size, box_size, symbols):
     # Pre-fill diagonal boxes (safe optimization)
     _prefill_diagonal_boxes(board, grid_size, box_size, symbols)
     
-    if _fill_board_simple(board, grid_size, box_size, symbols, 0, 0):
+    # Call progress callback after diagonal boxes filled
+    if progress_callback:
+        progress_callback(board, 0.1)
+    
+    # Track progress for callbacks
+    total_cells = grid_size * grid_size
+    cells_filled = [grid_size * box_size]  # Diagonal boxes already filled
+    
+    def progress_wrapper(row, col):
+        """Wrapper to update progress during generation"""
+        cells_filled[0] += 1
+        if progress_callback and cells_filled[0] % max(1, grid_size // 2) == 0:
+            progress = 0.1 + 0.9 * (cells_filled[0] / total_cells)
+            progress_callback(board, min(0.99, progress))
+    
+    if _fill_board_simple(board, grid_size, box_size, symbols, 0, 0, progress_wrapper):
+        if progress_callback:
+            progress_callback(board, 1.0)
         return board
     
     # This should never happen
@@ -387,16 +411,16 @@ def _generate_complete_sudoku_fallback(grid_size, box_size, symbols):
     raise Exception("Failed to generate valid Sudoku board")
 
 
-def _fill_board_simple(board, grid_size, box_size, symbols, row, col):
+def _fill_board_simple(board, grid_size, box_size, symbols, row, col, progress_callback=None):
     """Simple recursive backtracking to fill board - guaranteed to work"""
     if row == grid_size:
         return True
     if col == grid_size:
-        return _fill_board_simple(board, grid_size, box_size, symbols, row + 1, 0)
+        return _fill_board_simple(board, grid_size, box_size, symbols, row + 1, 0, progress_callback)
     
     # Skip if cell already filled
     if board[row][col] is not None:
-        return _fill_board_simple(board, grid_size, box_size, symbols, row, col + 1)
+        return _fill_board_simple(board, grid_size, box_size, symbols, row, col + 1, progress_callback)
     
     symbols_copy = symbols.copy()
     random.shuffle(symbols_copy)
@@ -404,7 +428,12 @@ def _fill_board_simple(board, grid_size, box_size, symbols, row, col):
     for symbol in symbols_copy:
         if is_valid_placement(board, row, col, symbol, grid_size, box_size):
             board[row][col] = symbol
-            if _fill_board_simple(board, grid_size, box_size, symbols, row, col + 1):
+            
+            # Call progress callback
+            if progress_callback:
+                progress_callback(row, col)
+            
+            if _fill_board_simple(board, grid_size, box_size, symbols, row, col + 1, progress_callback):
                 return True
             board[row][col] = None
     
