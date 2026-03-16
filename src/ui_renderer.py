@@ -74,6 +74,18 @@ def draw_main_menu(game):
     howto_rect = howto_text.get_rect(center=how_to_play_button.center)
     game.screen.blit(howto_text, howto_rect)
     
+    # Draw "Credits" button
+    credits_button = game.buttons['menu_credits']
+    is_hovering_credits = credits_button.collidepoint(game.mouse_pos)
+    credits_button_color = MENU_BUTTON_HOVER_SECONDARY if is_hovering_credits else MENU_BUTTON_SECONDARY
+    
+    pygame.draw.rect(game.screen, credits_button_color, credits_button, border_radius=8)
+    pygame.draw.rect(game.screen, BLACK, credits_button, 2, border_radius=8)
+    
+    credits_text = game.medium_font.render("Audio Credits", True, WHITE)
+    credits_rect = credits_text.get_rect(center=credits_button.center)
+    game.screen.blit(credits_text, credits_rect)
+    
     # Draw version/author info at bottom
     version_text = game.small_font.render("v2.0 | Created by Red Donaldson", True, MENU_SUBTITLE_COLOR)
     version_rect = version_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 30))
@@ -82,6 +94,10 @@ def draw_main_menu(game):
     # Draw instructions modal if open
     if game.show_instructions:
         draw_instructions_modal(game)
+    
+    # Draw credits modal if open
+    if game.show_credits:
+        draw_credits_modal(game)
     
     pygame.display.flip()
 
@@ -139,6 +155,72 @@ def draw_instructions_modal(game):
     
     # Close button
     close_button = game.buttons['instructions_close']
+    is_hovering = close_button.collidepoint(game.mouse_pos)
+    close_color = HOVER_RED if is_hovering else DARK_RED
+    
+    pygame.draw.rect(game.screen, close_color, close_button, border_radius=5)
+    pygame.draw.rect(game.screen, BLACK, close_button, 2, border_radius=5)
+    
+    close_text = game.medium_font.render("X", True, WHITE)
+    close_rect = close_text.get_rect(center=close_button.center)
+    game.screen.blit(close_text, close_rect)
+
+
+def draw_credits_modal(game):
+    """Draw the audio credits modal"""
+    modal = game.buttons['credits_modal']
+    
+    # Draw semi-transparent overlay
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    overlay.set_alpha(128)
+    overlay.fill(BLACK)
+    game.screen.blit(overlay, (0, 0))
+    
+    # Draw modal
+    pygame.draw.rect(game.screen, WHITE, modal, border_radius=10)
+    pygame.draw.rect(game.screen, BLACK, modal, 3, border_radius=10)
+    
+    # Title
+    title_text = game.large_font.render("Audio Credits", True, PURPLE)
+    title_rect = title_text.get_rect(center=(modal.centerx, modal.top + 40))
+    game.screen.blit(title_text, title_rect)
+    
+    # Credits text
+    credits = [
+        "All audio assets are royalty-free/Creative Commons",
+        "",
+        "Background Music:",
+        "• 'Puzzle Game 1' by Memoraphile (CC0)",
+        "  OpenGameArt.org",
+        "",
+        "Sound Effects:",
+        "• Correct: 'Correct Sound' by unadamlar (CC0)",
+        "• Wrong: 'Error Sound' by Bertrof (CC BY 3.0)",
+        "• Hint: 'Magical Spell' by Kastenfrosch (CC0)",
+        "• Undo: 'Button Click' by NenadSimic (CC BY 3.0)",
+        "• Button: 'Click Sound' by fins (CC0)",
+        "• Win: 'Level Complete' by FunWithSound (CC0)",
+        "• Combo: 'Power Up' by plasterbrain (CC0)",
+        "",
+        "Sources: freesound.org, OpenGameArt.org",
+        "",
+        "See CREDITS.md for full details and download links",
+    ]
+    
+    y_offset = modal.top + 85
+    for line in credits:
+        if line:
+            # Use smaller font for detailed text
+            if line.startswith("•"):
+                text_surface = game.small_font.render(line, True, BLACK)
+            else:
+                text_surface = game.small_font.render(line, True, BLACK)
+            text_rect = text_surface.get_rect(left=modal.left + 40, top=y_offset)
+            game.screen.blit(text_surface, text_rect)
+        y_offset += 24
+    
+    # Close button
+    close_button = game.buttons['credits_close']
     is_hovering = close_button.collidepoint(game.mouse_pos)
     close_color = HOVER_RED if is_hovering else DARK_RED
     
@@ -381,8 +463,14 @@ def draw_pencil_marks(game, row, col, x, y, cell_size):
         mark_x = x + mark_col * mark_spacing_x + mark_spacing_x // 2
         mark_y = y + mark_row * mark_spacing_y + mark_spacing_y // 2
         
-        # Draw the mark
-        mark_text = game.pencil_font.render(str(mark), True, (100, 100, 100))  # Dark gray for visibility
+        # Draw the mark with different color for admin mode
+        # In admin mode, show the CORRECT value in cyan, other marks in gray
+        if game.admin_mode and game.board[row][col] is None and mark == game.solution[row][col]:
+            mark_color = CYAN  # Cyan for correct value in admin mode
+        else:
+            mark_color = (100, 100, 100)  # Dark gray for regular pencil marks
+        
+        mark_text = game.pencil_font.render(str(mark), True, mark_color)
         mark_rect = mark_text.get_rect(center=(mark_x, mark_y))
         game.screen.blit(mark_text, mark_rect)
 
@@ -394,6 +482,20 @@ def draw_pencil_mode_indicator(game):
     text = game.small_font.render(mode_text, True, mode_color)
     text_rect = text.get_rect(right=WINDOW_WIDTH - 80, top=135)
     game.screen.blit(text, text_rect)
+    
+    # Draw admin mode indicator if active
+    if game.admin_mode:
+        admin_text = "[Ctrl+Shift+A] ADMIN MODE"
+        admin_color = CYAN
+        admin_surface = game.small_font.render(admin_text, True, admin_color)
+        admin_rect = admin_surface.get_rect(right=WINDOW_WIDTH - 80, top=160)
+        
+        # Draw a background box for emphasis
+        bg_rect = admin_rect.inflate(10, 4)
+        pygame.draw.rect(game.screen, (230, 255, 255), bg_rect, border_radius=5)
+        pygame.draw.rect(game.screen, CYAN, bg_rect, 2, border_radius=5)
+        
+        game.screen.blit(admin_surface, admin_rect)
 
 
 def draw_remaining_numbers(game):
@@ -575,6 +677,84 @@ def draw_settings_modal(game):
         text_surface = game.small_font.render(label, True, text_color)
         text_rect = text_surface.get_rect(center=button.center)
         game.screen.blit(text_surface, text_rect)
+    
+    # Sound toggle button
+    sound_button = game.buttons['sound_toggle']
+    is_hovering = sound_button.collidepoint(game.mouse_pos)
+    
+    if game.audio.sound_enabled:
+        sound_color = HOVER_GREEN if is_hovering else DARK_GREEN
+        sound_label = "Sound: ON"
+    else:
+        sound_color = HOVER_RED if is_hovering else DARK_RED
+        sound_label = "Sound: OFF"
+    
+    pygame.draw.rect(game.screen, sound_color, sound_button)
+    pygame.draw.rect(game.screen, BLACK, sound_button, 2)
+    
+    sound_text = game.small_font.render(sound_label, True, WHITE)
+    sound_rect = sound_text.get_rect(center=sound_button.center)
+    game.screen.blit(sound_text, sound_rect)
+    
+    # Volume controls
+    volume_y = modal.top + 180
+    
+    # Music volume label and slider
+    music_label = game.medium_font.render("Music Volume:", True, BLACK)
+    music_label_rect = music_label.get_rect(midleft=(modal.left + 40, volume_y))
+    game.screen.blit(music_label, music_label_rect)
+    
+    # Draw slider track
+    music_slider = game.buttons['music_slider']
+    pygame.draw.rect(game.screen, GRAY, music_slider, border_radius=4)
+    pygame.draw.rect(game.screen, BLACK, music_slider, 1, border_radius=4)
+    
+    # Draw slider fill
+    fill_width = int(music_slider.width * game.audio.music_volume)
+    if fill_width > 0:
+        fill_rect = pygame.Rect(music_slider.x, music_slider.y, fill_width, music_slider.height)
+        pygame.draw.rect(game.screen, DARK_BLUE, fill_rect, border_radius=4)
+    
+    # Draw slider handle
+    handle_x = music_slider.x + fill_width
+    handle_rect = pygame.Rect(handle_x - 5, music_slider.y - 4, 10, music_slider.height + 8)
+    pygame.draw.rect(game.screen, WHITE, handle_rect, border_radius=5)
+    pygame.draw.rect(game.screen, BLACK, handle_rect, 2, border_radius=5)
+    
+    # Volume percentage
+    volume_percent = int(game.audio.music_volume * 100)
+    percent_text = game.small_font.render(f"{volume_percent}%", True, BLACK)
+    percent_rect = percent_text.get_rect(midleft=(music_slider.right + 10, music_slider.centery))
+    game.screen.blit(percent_text, percent_rect)
+    
+    # SFX volume label and slider
+    sfx_y = volume_y + 50
+    sfx_label = game.medium_font.render("SFX Volume:", True, BLACK)
+    sfx_label_rect = sfx_label.get_rect(midleft=(modal.left + 40, sfx_y))
+    game.screen.blit(sfx_label, sfx_label_rect)
+    
+    # Draw slider track
+    sfx_slider = game.buttons['sfx_slider']
+    pygame.draw.rect(game.screen, GRAY, sfx_slider, border_radius=4)
+    pygame.draw.rect(game.screen, BLACK, sfx_slider, 1, border_radius=4)
+    
+    # Draw slider fill
+    sfx_fill_width = int(sfx_slider.width * game.audio.sfx_volume)
+    if sfx_fill_width > 0:
+        sfx_fill_rect = pygame.Rect(sfx_slider.x, sfx_slider.y, sfx_fill_width, sfx_slider.height)
+        pygame.draw.rect(game.screen, DARK_GREEN, sfx_fill_rect, border_radius=4)
+    
+    # Draw slider handle
+    sfx_handle_x = sfx_slider.x + sfx_fill_width
+    sfx_handle_rect = pygame.Rect(sfx_handle_x - 5, sfx_slider.y - 4, 10, sfx_slider.height + 8)
+    pygame.draw.rect(game.screen, WHITE, sfx_handle_rect, border_radius=5)
+    pygame.draw.rect(game.screen, BLACK, sfx_handle_rect, 2, border_radius=5)
+    
+    # Volume percentage
+    sfx_volume_percent = int(game.audio.sfx_volume * 100)
+    sfx_percent_text = game.small_font.render(f"{sfx_volume_percent}%", True, BLACK)
+    sfx_percent_rect = sfx_percent_text.get_rect(midleft=(sfx_slider.right + 10, sfx_slider.centery))
+    game.screen.blit(sfx_percent_text, sfx_percent_rect)
     
     # FIX: Removed "Check Solution" button - Red Donaldson, March 15, 2026
     # REASON: Redundant with lives system which provides instant feedback.

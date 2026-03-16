@@ -110,6 +110,11 @@ COMBO_COLORS = [
     (255, 50, 255)    # 3x - Magenta
 ]
 
+# Audio settings
+AUDIO_DEFAULT_MUSIC_VOLUME = 0.5  # Default music volume (0.0 to 1.0)
+AUDIO_DEFAULT_SFX_VOLUME = 0.7    # Default SFX volume (0.0 to 1.0)
+AUDIO_FADE_TIME = 1000            # Fade time in milliseconds
+
 # Visual Effect Settings
 FLOATING_TEXT_SPEED = 2  # Pixels per frame
 FLOATING_TEXT_DURATION = 45  # Frames (0.75 seconds at 60 FPS)

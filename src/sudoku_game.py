@@ -18,10 +18,12 @@ try:
     from .constants import *
     from . import game_logic
     from .ui_renderer import draw_game_screen, draw_main_menu
+    from .audio_manager import AudioManager
 except ImportError:
     from constants import *
     import game_logic
     from ui_renderer import draw_game_screen, draw_main_menu
+    from audio_manager import AudioManager
 
 
 class SudokuGame:
@@ -81,6 +83,7 @@ class SudokuGame:
         self.score = 0
         self.selected_cell = None
         self.pencil_mode = False  # Toggle for pencil vs pen mode
+        self.admin_mode = False  # Toggle for admin mode (auto-shows correct values)
         self.difficulty = 'easy'
         self.grid_size = 9
         self.box_size = 3
@@ -96,6 +99,7 @@ class SudokuGame:
         self.message_timer = 0
         self.show_settings = False
         self.show_instructions = False  # Show how to play instructions
+        self.show_credits = False  # Show audio credits
         self.show_remaining_digits = False  # Show remaining digits modal for large grids
         self.mouse_pos = (0, 0)  # Track mouse position for hover effects
         self.game_state = 'menu'  # 'menu' or 'playing'
@@ -117,6 +121,9 @@ class SudokuGame:
         # Difficulty settings
         self.difficulty_settings = DIFFICULTY_SETTINGS
         
+        # Audio Manager
+        self.audio = AudioManager()
+        
         # Buttons
         self.buttons = {}
         self.create_buttons()
@@ -128,6 +135,9 @@ class SudokuGame:
         
         # Start in menu state (don't auto-start game)
         # Game will start when user selects difficulty from menu
+        
+        # Start background music
+        self.audio.play_music()
     
     def create_buttons(self):
         """Create button rectangles"""
@@ -154,6 +164,13 @@ class SudokuGame:
         self.buttons['menu_howtoplay'] = pygame.Rect(center_x - howto_width // 2,
                                                       start_y + (button_height + button_spacing) * 3 + 20,
                                                       howto_width, howto_height)
+        
+        # Credits button
+        credits_width = 200
+        credits_height = 50
+        self.buttons['menu_credits'] = pygame.Rect(center_x - credits_width // 2,
+                                                    start_y + (button_height + button_spacing) * 3 + 80,
+                                                    credits_width, credits_height)
         
         # Instruction modal - increased height to fit all instructions with proper spacing
         modal_width = 700  # Widened to prevent horizontal text overflow
@@ -201,8 +218,9 @@ class SudokuGame:
         # Settings modal buttons
         # FIX: Increased modal width and button widths to prevent text overflow - Red Donaldson, March 15, 2026
         # Med (16x16) needs 163px, Hard (25x25) needs 176px, Check Solution needs 202px
+        # FIX: Increased modal height to accommodate audio controls - Red Donaldson, March 16, 2026
         modal_width = 600  # Increased from 400 to accommodate wider buttons
-        modal_height = 300
+        modal_height = 380  # Increased from 300 to fit volume sliders and sound toggle
         modal_x = (self.WINDOW_WIDTH - modal_width) // 2
         modal_y = (self.WINDOW_HEIGHT - modal_height) // 2
         
@@ -257,6 +275,31 @@ class SudokuGame:
                                                        remaining_modal_width, remaining_modal_height)
         self.buttons['remaining_close'] = pygame.Rect(remaining_modal_x + remaining_modal_width - 40,
                                                        remaining_modal_y + 10, 30, 30)
+        
+        # Credits modal
+        credits_modal_width = 700
+        credits_modal_height = 600
+        credits_modal_x = (self.WINDOW_WIDTH - credits_modal_width) // 2
+        credits_modal_y = (self.WINDOW_HEIGHT - credits_modal_height) // 2
+        
+        self.buttons['credits_modal'] = pygame.Rect(credits_modal_x, credits_modal_y,
+                                                     credits_modal_width, credits_modal_height)
+        self.buttons['credits_close'] = pygame.Rect(credits_modal_x + credits_modal_width - 50,
+                                                     credits_modal_y + 10, 40, 40)
+        
+        # Volume sliders in settings modal (will be added programmatically)
+        slider_y = modal_y + 180
+        slider_width = 400
+        slider_height = 8
+        slider_x = modal_x + (modal_width - slider_width) // 2
+        
+        self.buttons['music_slider'] = pygame.Rect(slider_x, slider_y, slider_width, slider_height)
+        self.buttons['sfx_slider'] = pygame.Rect(slider_x, slider_y + 50, slider_width, slider_height)
+        
+        # Sound toggle button in settings
+        sound_toggle_width = 150
+        sound_toggle_x = modal_x + (modal_width - sound_toggle_width) // 2
+        self.buttons['sound_toggle'] = pygame.Rect(sound_toggle_x, diff_y + 60, sound_toggle_width, 35)
     
     def update_cell_font(self):
         """Update cell font size based on grid size with proper spacing"""
@@ -305,6 +348,7 @@ class SudokuGame:
         self.score = 0
         self.seconds = 0
         self.pencil_mode = False
+        self.admin_mode = False  # Reset admin mode on new game
         self.undo_history = []  # Clear undo history on new game
         
         # Update grid settings based on difficulty
@@ -481,8 +525,13 @@ class SudokuGame:
     def update_combo(self, increment=True):
         """Update combo counter and multiplier"""
         if increment:
+            old_combo = self.combo_count
             self.combo_count = min(self.combo_count + 1, COMBO_MAX_LEVEL)
             self.combo_multiplier = COMBO_MULTIPLIERS[self.combo_count]
+            
+            # Play combo sound when reaching a new multiplier level
+            if self.combo_count > old_combo and self.combo_count >= 1:
+                self.audio.play_sound('combo')
         else:
             self.combo_count = 0
             self.combo_multiplier = COMBO_MULTIPLIERS[0]
@@ -697,6 +746,9 @@ class SudokuGame:
                     points = self.difficulty_settings[self.difficulty]['points_per_cell']
                     self.score += points
                     
+                    # Play correct sound
+                    self.audio.play_sound('correct')
+                    
                     # Add visual feedback
                     cell_size = self.BOARD_SIZE // self.grid_size
                     self.add_floating_points(
@@ -718,6 +770,10 @@ class SudokuGame:
                 else:
                     self.lives -= 1
                     self.reset_combo()  # Wrong move resets combo
+                    
+                    # Play wrong sound
+                    self.audio.play_sound('wrong')
+                    
                     self.show_message("Wrong! -1 life", self.DARK_RED)
                     
                     if self.lives <= 0:
@@ -728,6 +784,34 @@ class SudokuGame:
         self.pencil_mode = not self.pencil_mode
         mode = "Pencil" if self.pencil_mode else "Pen"
         self.show_message(f"{mode} mode", self.DARK_BLUE)
+    
+    def toggle_admin_mode(self):
+        """Toggle admin mode - automatically shows correct values as pencil marks"""
+        self.admin_mode = not self.admin_mode
+        
+        if self.admin_mode:
+            # Populate all empty cells with correct values as pencil marks
+            self.populate_admin_pencil_marks()
+            self.show_message("Admin Mode: ON (Showing correct values)", CYAN)
+        else:
+            # Remove only the correct values from pencil marks (preserve user's manual marks)
+            for i in range(self.grid_size):
+                for j in range(self.grid_size):
+                    if self.board[i][j] is None:
+                        correct_value = self.solution[i][j]
+                        # Remove the correct value if it exists
+                        self.pencil_marks[i][j].discard(correct_value)
+            self.show_message("Admin Mode: OFF", self.BLACK)
+    
+    def populate_admin_pencil_marks(self):
+        """Automatically populate pencil marks with correct values for empty cells"""
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                # Only add pencil marks for empty cells
+                if self.board[i][j] is None:
+                    correct_value = self.solution[i][j]
+                    # Add correct value to existing pencil marks (don't replace)
+                    self.pencil_marks[i][j].add(correct_value)
     
     def save_state(self):
         """Save current board state for undo"""
@@ -756,6 +840,9 @@ class SudokuGame:
         self.pencil_marks = copy.deepcopy(pencil_state)
         self.score = score_state
         
+        # Play undo sound
+        self.audio.play_sound('undo')
+        
         self.show_message("Move undone!", self.DARK_BLUE)
     
     def give_hint(self):
@@ -776,6 +863,9 @@ class SudokuGame:
                 row, col = random.choice(empty_cells)
                 self.board[row][col] = self.solution[row][col]
                 self.pencil_marks[row][col].clear()  # Clear pencil marks when placing hint
+                
+                # Play hint sound
+                self.audio.play_sound('hint')
                 
                 auto_filled = self.auto_fill_singles(source_cell=(row, col), award_points=False)
                 
@@ -806,6 +896,10 @@ class SudokuGame:
             self.show_message(f"{correct_count} correct, {wrong_count} wrong", self.DARK_RED)
     
     def win_game(self):
+        
+        # Play win sound
+        self.audio.play_sound('win')
+        
         """Handle winning the game"""
         self.game_over = True
         self.show_win_message = True
@@ -839,11 +933,23 @@ class SudokuGame:
         
         # Handle menu state
         if self.game_state == 'menu':
+            # Check for credits modal
+            if self.show_credits:
+                if self.buttons['credits_modal'].collidepoint(pos):
+                    if self.buttons['credits_close'].collidepoint(pos):
+                        self.show_credits = False
+                        self.audio.play_sound('button')
+                    return
+                else:
+                    self.show_credits = False
+                    return
+            
             # Check for instruction modal
             if self.show_instructions:
                 if self.buttons['instructions_modal'].collidepoint(pos):
                     if self.buttons['instructions_close'].collidepoint(pos):
                         self.show_instructions = False
+                        self.audio.play_sound('button')
                     return
                 else:
                     self.show_instructions = False
@@ -851,21 +957,30 @@ class SudokuGame:
             
             # Check menu buttons
             if self.buttons['menu_easy'].collidepoint(pos):
+                self.audio.play_sound('button')
                 self.start_game_with_difficulty('easy')
             elif self.buttons['menu_medium'].collidepoint(pos):
+                self.audio.play_sound('button')
                 self.start_game_with_difficulty('medium')
             elif self.buttons['menu_hard'].collidepoint(pos):
+                self.audio.play_sound('button')
                 self.start_game_with_difficulty('hard')
             elif self.buttons['menu_howtoplay'].collidepoint(pos):
+                self.audio.play_sound('button')
                 self.show_instructions = True
+            elif self.buttons['menu_credits'].collidepoint(pos):
+                self.audio.play_sound('button')
+                self.show_credits = True
             return
         
         # Handle game over modal
         if self.show_win_message or self.show_lose_message:
             if self.buttons['gameover_modal'].collidepoint(pos):
                 if self.buttons['gameover_newgame'].collidepoint(pos):
+                    self.audio.play_sound('button')
                     self.new_game()
                 elif self.buttons['gameover_menu'].collidepoint(pos):
+                    self.audio.play_sound('button')
                     self.game_state = 'menu'
                     self.show_win_message = False
                     self.show_lose_message = False
@@ -880,19 +995,42 @@ class SudokuGame:
             # Handle settings modal
             if self.buttons['settings_modal'].collidepoint(pos):
                 if self.buttons['settings_close'].collidepoint(pos):
+                    self.audio.play_sound('button')
                     self.show_settings = False
                 elif self.buttons['easy'].collidepoint(pos):
+                    self.audio.play_sound('button')
                     if self.difficulty != 'easy':
                         self.difficulty = 'easy'
                         self.new_game()
                 elif self.buttons['medium'].collidepoint(pos):
+                    self.audio.play_sound('button')
                     if self.difficulty != 'medium':
                         self.difficulty = 'medium'
                         self.new_game()
                 elif self.buttons['hard'].collidepoint(pos):
+                    self.audio.play_sound('button')
                     if self.difficulty != 'hard':
                         self.difficulty = 'hard'
                         self.new_game()
+                elif self.buttons['sound_toggle'].collidepoint(pos):
+                    enabled = self.audio.toggle_sound()
+                    status = "ON" if enabled else "OFF"
+                    self.show_message(f"Sound {status}", self.DARK_BLUE)
+                # Check if clicking on volume sliders
+                elif self.buttons['music_slider'].collidepoint(pos):
+                    # Calculate volume from click position
+                    slider_rect = self.buttons['music_slider']
+                    relative_x = pos[0] - slider_rect.x
+                    volume = relative_x / slider_rect.width
+                    self.audio.set_music_volume(volume)
+                elif self.buttons['sfx_slider'].collidepoint(pos):
+                    # Calculate volume from click position
+                    slider_rect = self.buttons['sfx_slider']
+                    relative_x = pos[0] - slider_rect.x
+                    volume = relative_x / slider_rect.width
+                    self.audio.set_sfx_volume(volume)
+                    # Play a test sound
+                    self.audio.play_sound('button')
                 # FIX: Removed 'check' button handler - Red Donaldson, March 15, 2026
                 # Check Solution feature removed as redundant with lives system
                 # Players get instant feedback: wrong = lose life, correct = gain points
@@ -905,6 +1043,7 @@ class SudokuGame:
             # Handle remaining digits modal
             if self.buttons['remaining_modal'].collidepoint(pos):
                 if self.buttons['remaining_close'].collidepoint(pos):
+                    self.audio.play_sound('button')
                     self.show_remaining_digits = False
                 return
             else:
@@ -921,16 +1060,19 @@ class SudokuGame:
         
         # Check buttons
         if self.buttons['new_game'].collidepoint(pos):
+            self.audio.play_sound('button')
             self.new_game()
         elif self.buttons['hint'].collidepoint(pos):
             self.give_hint()
         elif self.buttons['undo'].collidepoint(pos):
             self.undo()
         elif self.buttons['settings'].collidepoint(pos):
+            self.audio.play_sound('button')
             self.show_settings = True
         elif 'remaining' in self.buttons and self.buttons['remaining'].collidepoint(pos):
             # Only handle click if button exists (defensive check) and for large grids
             if self.grid_size > 9:
+                self.audio.play_sound('button')
                 self.show_remaining_digits = True
     
     def handle_key(self, key):
@@ -942,6 +1084,12 @@ class SudokuGame:
         keys = pygame.key.get_pressed()
         if (keys[pygame.K_LCTRL] or keys[pygame.K_RCTRL] or keys[pygame.K_LMETA] or keys[pygame.K_RMETA]) and key == pygame.K_z:
             self.undo()
+            return
+        
+        # Check for Ctrl+Shift+A (toggle admin mode)
+        if ((keys[pygame.K_LCTRL] or keys[pygame.K_RCTRL] or keys[pygame.K_LMETA] or keys[pygame.K_RMETA]) and 
+            (keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]) and key == pygame.K_a):
+            self.toggle_admin_mode()
             return
         
         # Toggle pencil mode with 'P' key
@@ -1084,6 +1232,9 @@ class SudokuGame:
             
             self.draw()
             self.clock.tick(FPS)
+        
+        # Clean up audio resources
+        self.audio.cleanup()
         
         pygame.quit()
         sys.exit()
