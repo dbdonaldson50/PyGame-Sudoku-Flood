@@ -1279,9 +1279,17 @@ class SudokuGame:
         
         # Toggle pencil mode with 'P' key (only for 9x9 grids)
         # For larger grids (16x16, 25x25), P is a valid symbol, so use button instead
+        # For 16x16: P is NOT in hex (0-9, A-F), so toggle pencil mode
+        # For 25x25: P is a valid symbol (A-Z except X), so place it
         # Fixed by: Red Donaldson, March 17, 2026
-        if key == pygame.K_p and self.grid_size == 9:
-            self.toggle_pencil_mode()
+        if key == pygame.K_p:
+            # Check if 'P' is a valid symbol in the current grid
+            if 'P' in self.symbols:
+                # P is valid symbol (25x25 grid) - place it
+                self.handle_cell_input('P')
+            else:
+                # P not valid (9x9 or 16x16 grid) - toggle pencil mode
+                self.toggle_pencil_mode()
             return
         
         # Handle number input for all grid sizes
