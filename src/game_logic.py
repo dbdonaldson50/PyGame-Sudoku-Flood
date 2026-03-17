@@ -51,15 +51,13 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
     # Pre-fill diagonal boxes (safe optimization)
     _prefill_diagonal_boxes(board, grid_size, box_size, symbols)
     
-    # Pre-fill anti-diagonal boxes for better visual and faster generation
-    _prefill_diagonals(board, grid_size, box_size, symbols)
-    
     # Calculate initial progress based on prefilled cells
-    # Main diagonal boxes: (grid_size // box_size) boxes
-    # Anti-diagonal boxes: (grid_size // box_size - 1) boxes (skip center)
+    # Main diagonal boxes only: (grid_size // box_size) boxes
+    # Anti-diagonal boxes removed - they share constraints and cause invalid boards
+    # Reverted by: Red Donaldson, March 17, 2026
     num_box_diagonal = grid_size // box_size
     cells_per_box = box_size * box_size
-    prefilled_cells = (2 * num_box_diagonal - 1) * cells_per_box
+    prefilled_cells = num_box_diagonal * cells_per_box
     total_cells = grid_size * grid_size
     initial_progress = prefilled_cells / total_cells
     
@@ -169,43 +167,30 @@ def _prefill_diagonal_boxes(board, grid_size, box_size, symbols):
 
 
 def _prefill_diagonals(board, grid_size, box_size, symbols):
-    """Pre-fill anti-diagonal boxes to match main diagonal boxes
+    """DEPRECATED: Pre-fill anti-diagonal boxes to match main diagonal boxes
     
-    Fills complete boxes along the anti-diagonal (top-right to bottom-left).
-    The center box is shared by both diagonals, so we skip it to avoid conflicts.
-    This creates a nice symmetric X pattern of pre-filled boxes.
+    This function is disabled because anti-diagonal boxes share rows, columns,
+    and box constraints with each other. Filling them without constraint checking
+    creates invalid boards that cannot be solved.
     
-    Modified by: Red Donaldson
+    Problem discovered: March 17, 2026 by Red Donaldson
+    - Anti-diagonal boxes (0,4), (1,3), (2,2), (3,1), (4,0) for 25x25 share constraints
+    - Cannot be filled independently like main diagonal boxes
+    - Caused crashes and invalid puzzle generation
+    
+    Deprecated by: Red Donaldson
     Date: March 17, 2026
     """
-    num_boxes = grid_size // box_size
+    pass  # Disabled - do not use
     
-    # Fill anti-diagonal boxes
-    for box_num in range(num_boxes):
-        # Calculate anti-diagonal box position
-        # For box_num = 0: top-right box (row=0, col=num_boxes-1)
-        # For box_num = 1: next one down-left
-        # For box_num = num_boxes-1: bottom-left box (row=num_boxes-1, col=0)
-        box_row = box_num
-        box_col = num_boxes - 1 - box_num
-        
-        # Skip center box - it's already filled by main diagonal
-        if box_row == box_col:
-            continue
-        
-        # Shuffle symbols for randomness
-        shuffled_symbols = symbols.copy()
-        random.shuffle(shuffled_symbols)
-        
-        # Fill this anti-diagonal box
-        box_start_row = box_row * box_size
-        box_start_col = box_col * box_size
-        symbol_idx = 0
-        
-        for i in range(box_start_row, box_start_row + box_size):
-            for j in range(box_start_col, box_start_col + box_size):
-                board[i][j] = shuffled_symbols[symbol_idx]
-                symbol_idx += 1
+    # Original implementation (disabled):
+    # num_boxes = grid_size // box_size
+    # for box_num in range(num_boxes):
+    #     box_row = box_num
+    #     box_col = num_boxes - 1 - box_num
+    #     if box_row == box_col:
+    #         continue
+    #     # ... fill anti-diagonal box without constraint checking (causes invalid boards)
 
 
 def _fill_first_row(board, grid_size, box_size, symbols_set,
