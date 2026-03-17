@@ -549,7 +549,8 @@ def draw_board(game):
                 game.screen.blit(value_text, value_rect)
                 
                 # Draw combo length in orange at bottom of cell
-                combo_text = f"↯{combo_length}" if combo_length > 0 else ""
+                # Fixed by: Red Donaldson, March 17, 2026 - changed ↯ to 'x' for font compatibility
+                combo_text = f"x{combo_length}" if combo_length > 0 else ""
                 if combo_text:
                     combo_font = game.pencil_font
                     combo_surface = combo_font.render(combo_text, True, BUTTON_ORANGE)
@@ -1118,10 +1119,11 @@ def draw_zoom_modal(game):
                 game.screen.blit(answer_text, answer_rect)
                 
                 # Draw combo length in orange at bottom
+                # Fixed by: Red Donaldson, March 17, 2026 - changed ↯ to 'x' for font compatibility
                 if combo_length > 0:
                     combo_font_size = int(cell_size * 0.3)
                     combo_font = pygame.font.SysFont(FONT_NAME, combo_font_size, bold=False, italic=False)
-                    combo_text = combo_font.render(f"↯{combo_length}", True, BUTTON_ORANGE)
+                    combo_text = combo_font.render(f"x{combo_length}", True, BUTTON_ORANGE)
                     combo_rect = combo_text.get_rect(center=(x + cell_size // 2, y + cell_size * 2 // 3))
                     game.screen.blit(combo_text, combo_rect)
             
