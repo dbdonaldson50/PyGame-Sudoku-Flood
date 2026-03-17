@@ -401,9 +401,21 @@ class SudokuGame:
         self.generation_board = [[None for _ in range(self.grid_size)] for _ in range(self.grid_size)]
         self.generation_progress = 0.0
         self.generation_spinner_angle = 0
+        last_render_time = [0]  # Track last render time for throttling
         
-        # Define progress callback
+        # Define progress callback with time-based throttling
         def progress_callback(board, progress):
+            import time
+            current_time = time.time()
+            
+            # Only render if at least 100ms has passed since last render
+            # This prevents excessive rendering while still keeping UI responsive
+            if current_time - last_render_time[0] < 0.1 and progress < 0.99:
+                # Still update progress without rendering
+                self.generation_progress = progress
+                return
+            
+            last_render_time[0] = current_time
             self.generation_board = copy.deepcopy(board)
             self.generation_progress = progress
             self.generation_spinner_angle = (self.generation_spinner_angle + 10) % 360

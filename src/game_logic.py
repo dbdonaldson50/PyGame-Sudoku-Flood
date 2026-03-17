@@ -66,13 +66,17 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
         Only updates progress when we reach a new maximum position to avoid
         progress going backward during backtracking.
         
+        Optimized for large grids: Less frequent callbacks to reduce overhead.
+        
         Modified by: Red Donaldson
         Date: March 17, 2026
         """
         current_position = row * grid_size + col
         if current_position > max_position[0]:
             max_position[0] = current_position
-            if progress_callback and current_position % max(1, grid_size // 2) == 0:
+            # Reduced callback frequency: every 20-50 cells depending on grid size
+            callback_frequency = max(20, grid_size * 2)
+            if progress_callback and current_position % callback_frequency == 0:
                 progress = 0.1 + 0.9 * (current_position / total_cells)
                 progress_callback(board, min(0.99, progress))
     
