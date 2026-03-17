@@ -535,9 +535,10 @@ def draw_board(game):
                 num_text = game.cell_font.render(display_text, True, BLACK)
                 num_rect = num_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
                 game.screen.blit(num_text, num_rect)
-            elif game.admin_mode:
+            elif game.admin_mode and not game.animation_queue:
                 # In admin mode, show correct value and combo length
                 # Don't show pencil marks to avoid clutter
+                # Skip combo calculation during animation for performance
                 # Added by: Red Donaldson, March 17, 2026
                 combo_length = game.calculate_potential_combo(i, j)
                 
@@ -1100,8 +1101,9 @@ def draw_zoom_modal(game):
             value = game.board[actual_row][actual_col]
             
             # Show correct answer and combo in admin mode
+            # Skip combo calculation during animation for performance
             # Updated by: Red Donaldson, March 17, 2026
-            if game.admin_mode and not is_initial and value is None:
+            if game.admin_mode and not is_initial and value is None and not game.animation_queue:
                 # Calculate combo length for this cell
                 combo_length = game.calculate_potential_combo(actual_row, actual_col)
                 
