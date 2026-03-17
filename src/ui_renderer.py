@@ -612,7 +612,7 @@ def draw_pencil_marks(game, row, col, x, y, cell_size):
 
 def draw_pencil_mode_indicator(game):
     """Draw pencil mode indicator"""
-    mode_text = "[P] Pencil Mode" if game.pencil_mode else "[P] Pen Mode"
+    mode_text = "Pencil Mode" if game.pencil_mode else "Pen Mode"
     mode_color = PURPLE if game.pencil_mode else BLACK
     text = game.small_font.render(mode_text, True, mode_color)
     text_rect = text.get_rect(right=WINDOW_WIDTH - 80, top=135)

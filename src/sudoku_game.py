@@ -435,9 +435,10 @@ class SudokuGame:
             last_render_time[0] = current_time
             render_count[0] += 1
             
-            # CRITICAL: Only copy board every 5th render to save memory
-            # This reduces deepcopy calls from ~100 to ~20 for 25x25 generation
-            if render_count[0] % 5 == 0 or progress >= 0.99:
+            # CRITICAL: Copy board frequently during early phase (diagonal filling),
+            # then reduce to every 5th render to save memory
+            # This shows the main diagonal pattern while still preventing crashes
+            if progress < 0.35 or render_count[0] % 5 == 0 or progress >= 0.99:
                 self.generation_board = copy.deepcopy(board)
             
             self.generation_progress = progress
