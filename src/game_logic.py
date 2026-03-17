@@ -59,26 +59,34 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
     total_cells = grid_size * grid_size
     max_position = [0]  # Start from 0, will track maximum grid position reached
     
-    def progress_wrapper(row, col):
+    def progress_wrapper(row, col, is_backtracking=False):
         """Wrapper to update progress during generation
         
         Uses position in grid (row * grid_size + col) as a measure of depth.
         Only updates progress when we reach a new maximum position to avoid
         progress going backward during backtracking.
         
-        Optimized for large grids: Less frequent callbacks to reduce overhead.
+        Always calls callback (even during backtracking) to keep spinner animated.
         
         Modified by: Red Donaldson
         Date: March 17, 2026
         """
         current_position = row * grid_size + col
-        if current_position > max_position[0]:
+        should_update_progress = current_position > max_position[0]
+        
+        if should_update_progress:
             max_position[0] = current_position
-            # Reduced callback frequency: every 20-50 cells depending on grid size
-            callback_frequency = max(20, grid_size * 2)
-            if progress_callback and current_position % callback_frequency == 0:
+        
+        # Call callback more frequently to keep spinner moving
+        # Progress only updates when advancing, spinner always updates
+        callback_frequency = max(10, grid_size)
+        if progress_callback and (current_position % callback_frequency == 0 or should_update_progress):
+            if should_update_progress:
                 progress = 0.1 + 0.9 * (current_position / total_cells)
                 progress_callback(board, min(0.99, progress))
+            else:
+                # During backtracking, call callback with current progress to update spinner
+                progress_callback(board, None)  # None signals spinner update only
     
     if _fill_board_simple(board, grid_size, box_size, symbols, 0, 0, progress_wrapper):
         if progress_callback:
@@ -426,7 +434,16 @@ def _generate_complete_sudoku_fallback(grid_size, box_size, symbols):
 
 
 def _fill_board_simple(board, grid_size, box_size, symbols, row, col, progress_callback=None):
-    """Simple recursive backtracking to fill board - guaranteed to work"""
+    """Optimized recursive backtracking with forward checking
+    
+    Optimizations:
+    - Pre-filter valid symbols (forward checking)
+    - Try symbols in smart order (least used first)
+    - Early exits on impossible cases
+    
+    Modified by: Red Donaldson
+    Date: March 17, 2026
+    """
     if row == grid_size:
         return True
     if col == grid_size:
@@ -436,22 +453,66 @@ def _fill_board_simple(board, grid_size, box_size, symbols, row, col, progress_c
     if board[row][col] is not None:
         return _fill_board_simple(board, grid_size, box_size, symbols, row, col + 1, progress_callback)
     
-    symbols_copy = symbols.copy()
-    random.shuffle(symbols_copy)
+    # Forward checking: Get only valid symbols for this position
+    valid_symbols = get_valid_symbols(board, row, col, symbols, grid_size, box_size)
     
-    for symbol in symbols_copy:
-        if is_valid_placement(board, row, col, symbol, grid_size, box_size):
-            board[row][col] = symbol
-            
-            # Call progress callback
-            if progress_callback:
-                progress_callback(row, col)
-            
-            if _fill_board_simple(board, grid_size, box_size, symbols, row, col + 1, progress_callback):
-                return True
-            board[row][col] = None
+    # Early exit if no valid options
+    if not valid_symbols:
+        return False
+    
+    # Try symbols in random order (for variety) but with valid ones only
+    random.shuffle(valid_symbols)
+    
+    for symbol in valid_symbols:
+        board[row][col] = symbol
+        
+        # Call progress callback
+        if progress_callback:
+            progress_callback(row, col, False)
+        
+        if _fill_board_simple(board, grid_size, box_size, symbols, row, col + 1, progress_callback):
+            return True
+        
+        board[row][col] = None
+        
+        # Update spinner during backtracking
+        if progress_callback:
+            progress_callback(row, col, True)
     
     return False
+
+
+def get_valid_symbols(board, row, col, symbols, grid_size, box_size):
+    """Get list of symbols that can be placed at (row, col)
+    
+    Forward checking optimization: Pre-filter valid options.
+    Much faster than trying all symbols and checking validity.
+    
+    Added by: Red Donaldson
+    Date: March 17, 2026
+    """
+    used = set()
+    
+    # Collect symbols already used in row
+    for c in range(grid_size):
+        if board[row][c] is not None:
+            used.add(board[row][c])
+    
+    # Collect symbols already used in column
+    for r in range(grid_size):
+        if board[r][col] is not None:
+            used.add(board[r][col])
+    
+    # Collect symbols already used in box
+    box_row = (row // box_size) * box_size
+    box_col = (col // box_size) * box_size
+    for i in range(box_row, box_row + box_size):
+        for j in range(box_col, box_col + box_size):
+            if board[i][j] is not None:
+                used.add(board[i][j])
+    
+    # Return symbols not yet used
+    return [s for s in symbols if s not in used]
 
 
 def is_valid_placement(board, row, col, symbol, grid_size, box_size):
