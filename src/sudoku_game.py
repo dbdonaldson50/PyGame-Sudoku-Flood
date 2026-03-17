@@ -192,7 +192,7 @@ class SudokuGame:
         self.buttons['instructions_modal'] = pygame.Rect(modal_x, modal_y, modal_width, modal_height)
         self.buttons['instructions_close'] = pygame.Rect(modal_x + modal_width - 50, modal_y + 10, 40, 40)
         
-        # Control buttons (New Game, Hint, Undo, Settings, Remaining) - fixed position
+        # Control buttons (New Game, Hint, Undo, Settings, Remaining, Pencil) - fixed position
         # Note: "Remaining" button is always created but only drawn for large grids (16x16, 25x25)
         # FIX: Variable button widths to prevent text overflow - Red Donaldson, March 15, 2026
         button_widths = {
@@ -200,7 +200,8 @@ class SudokuGame:
             'hint': 72,        # "Hint" fits comfortably
             'undo': 72,        # "Undo" fits comfortably
             'settings': 120,   # "Settings" needs 116px, using 120px
-            'remaining': 135   # "Remaining" needs 128px, using 135px
+            'remaining': 135,  # "Remaining" needs 128px, using 135px
+            'pencil': 90       # "Pen/Pencil" mode button - Red Donaldson, March 17, 2026
         }
         button_height = 35
         button_y = 945  # Fixed position at bottom
@@ -225,6 +226,9 @@ class SudokuGame:
         curr_x += button_widths['settings'] + spacing
         
         self.buttons['remaining'] = pygame.Rect(curr_x, button_y, button_widths['remaining'], button_height)
+        curr_x += button_widths['remaining'] + spacing
+        
+        self.buttons['pencil'] = pygame.Rect(curr_x, button_y, button_widths['pencil'], button_height)
         
         # Settings modal buttons
         # FIX: Increased modal width and button widths to prevent text overflow - Red Donaldson, March 15, 2026
@@ -402,8 +406,10 @@ class SudokuGame:
         self.generation_progress = 0.0
         self.generation_spinner_angle = 0
         last_render_time = [0]  # Track last render time for throttling
+        render_count = [0]  # Track number of renders to reduce deepcopy frequency
         
         # Define progress callback with time-based throttling
+        # CRITICAL FIX: Removed deepcopy to prevent memory exhaustion - Red Donaldson, March 17, 2026
         def progress_callback(board, progress):
             import time
             current_time = time.time()
@@ -427,7 +433,13 @@ class SudokuGame:
                 return
             
             last_render_time[0] = current_time
-            self.generation_board = copy.deepcopy(board)
+            render_count[0] += 1
+            
+            # CRITICAL: Only copy board every 5th render to save memory
+            # This reduces deepcopy calls from ~100 to ~20 for 25x25 generation
+            if render_count[0] % 5 == 0 or progress >= 0.99:
+                self.generation_board = copy.deepcopy(board)
+            
             self.generation_progress = progress
             self.generation_spinner_angle = (self.generation_spinner_angle + 3) % 360  # Slower rotation
             
@@ -1243,6 +1255,10 @@ class SudokuGame:
             if self.grid_size > 9:
                 self.audio.play_sound('button')
                 self.show_remaining_digits = True
+        elif 'pencil' in self.buttons and self.buttons['pencil'].collidepoint(pos):
+            # Toggle pencil mode - Red Donaldson, March 17, 2026
+            self.audio.play_sound('button')
+            self.toggle_pencil_mode()
     
     def handle_key(self, key):
         """Handle keyboard events"""
@@ -1261,8 +1277,10 @@ class SudokuGame:
             self.toggle_admin_mode()
             return
         
-        # Toggle pencil mode with 'P' key
-        if key == pygame.K_p:
+        # Toggle pencil mode with 'P' key (only for 9x9 grids)
+        # For larger grids (16x16, 25x25), P is a valid symbol, so use button instead
+        # Fixed by: Red Donaldson, March 17, 2026
+        if key == pygame.K_p and self.grid_size == 9:
             self.toggle_pencil_mode()
             return
         

@@ -727,13 +727,20 @@ def draw_control_buttons(game):
         ('hint', 'Hint', DARK_GREEN, HOVER_GREEN),
         ('undo', 'Undo', UNDO_COLOR, (180, 180, 180)),
         ('settings', 'Settings', PURPLE, HOVER_PURPLE),
-        ('remaining', 'Remaining', BUTTON_ORANGE, HOVER_ORANGE)
+        ('remaining', 'Remaining', BUTTON_ORANGE, HOVER_ORANGE),
+        ('pencil', None, DARK_BLUE, HOVER_BLUE)  # Text determined dynamically
     ]
     
     for key, text, color, hover_color in button_data:
         # Skip "Remaining" button for small grids (9x9)
         if key == 'remaining' and game.grid_size <= 9:
             continue
+        
+        # Pencil button text changes based on mode
+        if key == 'pencil':
+            text = 'Pencil' if game.pencil_mode else 'Pen'
+            color = PURPLE if game.pencil_mode else DARK_BLUE
+            hover_color = HOVER_PURPLE if game.pencil_mode else HOVER_BLUE
             
         # Defensive check: ensure button exists before trying to access it
         if key not in game.buttons:
