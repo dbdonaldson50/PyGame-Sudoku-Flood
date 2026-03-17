@@ -51,15 +51,23 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
     # Pre-fill diagonal boxes (safe optimization)
     _prefill_diagonal_boxes(board, grid_size, box_size, symbols)
     
-    # Pre-fill both diagonals for better visual and faster generation
+    # Pre-fill anti-diagonal boxes for better visual and faster generation
     _prefill_diagonals(board, grid_size, box_size, symbols)
     
-    # Call progress callback after diagonal boxes and diagonals filled
+    # Calculate initial progress based on prefilled cells
+    # Main diagonal boxes: (grid_size // box_size) boxes
+    # Anti-diagonal boxes: (grid_size // box_size - 1) boxes (skip center)
+    num_box_diagonal = grid_size // box_size
+    cells_per_box = box_size * box_size
+    prefilled_cells = (2 * num_box_diagonal - 1) * cells_per_box
+    total_cells = grid_size * grid_size
+    initial_progress = prefilled_cells / total_cells
+    
+    # Call progress callback after diagonal boxes filled
     if progress_callback:
-        progress_callback(board, 0.15)
+        progress_callback(board, initial_progress)
     
     # Track progress for callbacks - use max position reached to avoid going backward during backtracking
-    total_cells = grid_size * grid_size
     max_position = [0]  # Start from 0, will track maximum grid position reached
     
     def progress_wrapper(row, col, is_backtracking=False):
@@ -85,7 +93,9 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
         if should_update_progress:
             # Always update when making progress
             if progress_callback:
-                progress = 0.15 + 0.85 * (current_position / total_cells)
+                # Progress from initial_progress to 0.99 as we fill remaining cells
+                remaining_progress = (1.0 - initial_progress) * (current_position / total_cells)
+                progress = initial_progress + remaining_progress
                 progress_callback(board, min(0.99, progress))
         elif is_backtracking and progress_callback:
             # During backtracking, only update spinner occasionally (every 100 cells)
@@ -159,29 +169,43 @@ def _prefill_diagonal_boxes(board, grid_size, box_size, symbols):
 
 
 def _prefill_diagonals(board, grid_size, box_size, symbols):
-    """Pre-fill both main and anti-diagonal with valid values
+    """Pre-fill anti-diagonal boxes to match main diagonal boxes
     
-    This provides additional constraints and creates a nice visual pattern.
-    Only fills cells that aren't already filled by diagonal boxes.
-    Carefully checks validity to avoid conflicts.
+    Fills complete boxes along the anti-diagonal (top-right to bottom-left).
+    The center box is shared by both diagonals, so we skip it to avoid conflicts.
+    This creates a nice symmetric X pattern of pre-filled boxes.
     
-    Added by: Red Donaldson
+    Modified by: Red Donaldson
     Date: March 17, 2026
     """
-    # Fill main diagonal (top-left to bottom-right)
-    for i in range(grid_size):
-        if board[i][i] is None:  # Skip if already filled by diagonal box
-            valid_symbols = get_valid_symbols(board, i, i, symbols, grid_size, box_size)
-            if valid_symbols:
-                board[i][i] = random.choice(valid_symbols)
+    num_boxes = grid_size // box_size
     
-    # Fill anti-diagonal (top-right to bottom-left)
-    for i in range(grid_size):
-        j = grid_size - 1 - i
-        if board[i][j] is None:  # Skip if already filled
-            valid_symbols = get_valid_symbols(board, i, j, symbols, grid_size, box_size)
-            if valid_symbols:
-                board[i][j] = random.choice(valid_symbols)
+    # Fill anti-diagonal boxes
+    for box_num in range(num_boxes):
+        # Calculate anti-diagonal box position
+        # For box_num = 0: top-right box (row=0, col=num_boxes-1)
+        # For box_num = 1: next one down-left
+        # For box_num = num_boxes-1: bottom-left box (row=num_boxes-1, col=0)
+        box_row = box_num
+        box_col = num_boxes - 1 - box_num
+        
+        # Skip center box - it's already filled by main diagonal
+        if box_row == box_col:
+            continue
+        
+        # Shuffle symbols for randomness
+        shuffled_symbols = symbols.copy()
+        random.shuffle(shuffled_symbols)
+        
+        # Fill this anti-diagonal box
+        box_start_row = box_row * box_size
+        box_start_col = box_col * box_size
+        symbol_idx = 0
+        
+        for i in range(box_start_row, box_start_row + box_size):
+            for j in range(box_start_col, box_start_col + box_size):
+                board[i][j] = shuffled_symbols[symbol_idx]
+                symbol_idx += 1
 
 
 def _fill_first_row(board, grid_size, box_size, symbols_set,
