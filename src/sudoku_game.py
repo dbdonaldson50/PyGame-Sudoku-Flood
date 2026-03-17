@@ -574,6 +574,12 @@ class SudokuGame:
             self.board[row][col] = value
             self.pencil_marks[row][col].clear()
             self.laser_source = (row, col)
+            
+            # Update zoom modal to follow the laser
+            # Added by: Red Donaldson, March 17, 2026
+            if self.show_zoom_modal:
+                self.zoom_center_cell = (row, col)
+            
             self.animation_queue.pop(0)
     
     def update_animation(self):
@@ -594,6 +600,11 @@ class SudokuGame:
                 # Place the cell
                 self.board[row][col] = value
                 self.pencil_marks[row][col].clear()
+                
+                # Update zoom modal to follow the laser during animation
+                # Added by: Red Donaldson, March 17, 2026
+                if self.show_zoom_modal:
+                    self.zoom_center_cell = (row, col)
                 
                 # Add visual effects for this specific cell
                 cell_size = self.BOARD_SIZE // self.grid_size
