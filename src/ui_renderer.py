@@ -344,22 +344,18 @@ def draw_generation_screen(game):
                 y = board_y + i * cell_size
                 rect = pygame.Rect(x, y, cell_size, cell_size)
                 
-                # Draw cell background
+                # Draw cell background - blue for filled cells (don't reveal puzzle)
                 if game.generation_board[i][j] is not None:
-                    pygame.draw.rect(game.screen, LIGHT_GRAY, rect)
+                    pygame.draw.rect(game.screen, DARK_BLUE, rect)
                 else:
                     pygame.draw.rect(game.screen, WHITE, rect)
                 
                 # Draw cell border
                 pygame.draw.rect(game.screen, BLACK, rect, 1)
                 
-                # Draw cell value if filled
-                if game.generation_board[i][j] is not None:
-                    font_size = max(10, int(cell_size * 0.5))
-                    gen_font = pygame.font.SysFont(FONT_NAME, font_size, bold=False, italic=False)
-                    value_text = gen_font.render(str(game.generation_board[i][j]), True, DARK_GREEN)
-                    value_rect = value_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
-                    game.screen.blit(value_text, value_rect)
+                # Don't draw the actual values - just show filled vs empty with colors
+                # This prevents revealing the puzzle solution during generation
+                # Modified by: Red Donaldson, March 17, 2026
         
         # Draw thicker box borders
         box_size = game.box_size
