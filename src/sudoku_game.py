@@ -547,6 +547,10 @@ class SudokuGame:
         if not filled_sequence:
             return
         
+        # Close zoom modal to show full board animation
+        # Added by: Red Donaldson, March 17, 2026
+        self.show_zoom_modal = False
+        
         # Build animation queue with effect data for each cell
         # Each entry: (row, col, value, points, combo_level)
         self.animation_queue = []
@@ -575,11 +579,6 @@ class SudokuGame:
             self.pencil_marks[row][col].clear()
             self.laser_source = (row, col)
             
-            # Update zoom modal to follow the laser
-            # Added by: Red Donaldson, March 17, 2026
-            if self.show_zoom_modal:
-                self.zoom_center_cell = (row, col)
-            
             self.animation_queue.pop(0)
     
     def update_animation(self):
@@ -600,11 +599,6 @@ class SudokuGame:
                 # Place the cell
                 self.board[row][col] = value
                 self.pencil_marks[row][col].clear()
-                
-                # Update zoom modal to follow the laser during animation
-                # Added by: Red Donaldson, March 17, 2026
-                if self.show_zoom_modal:
-                    self.zoom_center_cell = (row, col)
                 
                 # Add visual effects for this specific cell
                 cell_size = self.BOARD_SIZE // self.grid_size
