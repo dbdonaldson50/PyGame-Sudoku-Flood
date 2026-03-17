@@ -528,7 +528,7 @@ def draw_board(game):
                     alpha_color = SELECTED_GLOW
                     pygame.draw.rect(game.screen, alpha_color, (x, y, cell_size, cell_size), thickness)
             
-            # Draw number, pencil marks, or admin mode combo info
+            # Draw number, admin mode info, or pencil marks
             if game.board[i][j] is not None:
                 # Draw the placed number
                 display_text = str(game.board[i][j])
@@ -536,24 +536,27 @@ def draw_board(game):
                 num_rect = num_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
                 game.screen.blit(num_text, num_rect)
             elif game.admin_mode:
-                # In admin mode, show combo length for empty cells
-                # Updated by: Red Donaldson, March 17, 2026
-                # Simplified to only show combo count (removed correct value for cleaner view)
+                # In admin mode, show correct value and combo length
+                # Don't show pencil marks to avoid clutter
+                # Added by: Red Donaldson, March 17, 2026
                 combo_length = game.calculate_potential_combo(i, j)
                 
-                # Draw combo length centered in orange (only if > 0)
+                # Draw correct value in cyan at top of cell
+                correct_value = str(game.solution[i][j])
+                value_font = game.pencil_font if game.grid_size >= 16 else game.cell_font
+                value_text = value_font.render(correct_value, True, CYAN)
+                value_rect = value_text.get_rect(center=(x + cell_size // 2, y + cell_size // 3))
+                game.screen.blit(value_text, value_rect)
+                
+                # Draw combo length in orange at bottom of cell (only if > 0)
                 if combo_length > 0:
-                    combo_font = game.pencil_font if game.grid_size >= 16 else game.cell_font
+                    combo_font = game.pencil_font
                     combo_text = f"x{combo_length}"
                     combo_surface = combo_font.render(combo_text, True, BUTTON_ORANGE)
-                    combo_rect = combo_surface.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
+                    combo_rect = combo_surface.get_rect(center=(x + cell_size // 2, y + cell_size * 2 // 3))
                     game.screen.blit(combo_surface, combo_rect)
-                
-                # Also draw pencil marks if any exist
-                if game.pencil_marks[i][j]:
-                    draw_pencil_marks(game, i, j, x, y, cell_size)
             elif game.pencil_marks[i][j]:
-                # Draw pencil marks
+                # Draw pencil marks (only when not in admin mode)
                 draw_pencil_marks(game, i, j, x, y, cell_size)
     
     # Draw thick lines for internal box boundaries only
@@ -1093,22 +1096,29 @@ def draw_zoom_modal(game):
             pygame.draw.rect(game.screen, cell_color, rect)
             pygame.draw.rect(game.screen, BLACK, rect, 2)
             
-            # Draw cell value or admin mode info
+            # Draw cell value, admin mode info, or pencil marks
             value = game.board[actual_row][actual_col]
             
-            # Show combo length in admin mode
+            # Show correct answer and combo in admin mode
             # Updated by: Red Donaldson, March 17, 2026
-            # Simplified to only show combo count (removed correct value for cleaner view)
             if game.admin_mode and not is_initial and value is None:
                 # Calculate combo length for this cell
                 combo_length = game.calculate_potential_combo(actual_row, actual_col)
                 
-                # Draw combo length centered in orange (only if > 0)
+                # Draw correct value in cyan at top
+                correct_value = game.solution[actual_row][actual_col]
+                font_size = int(cell_size * 0.4)
+                zoom_font = pygame.font.SysFont(FONT_NAME, font_size, bold=False, italic=False)
+                answer_text = zoom_font.render(str(correct_value), True, CYAN)
+                answer_rect = answer_text.get_rect(center=(x + cell_size // 2, y + cell_size // 3))
+                game.screen.blit(answer_text, answer_rect)
+                
+                # Draw combo length in orange at bottom (only if > 0)
                 if combo_length > 0:
-                    combo_font_size = int(cell_size * 0.5)
+                    combo_font_size = int(cell_size * 0.3)
                     combo_font = pygame.font.SysFont(FONT_NAME, combo_font_size, bold=False, italic=False)
                     combo_text = combo_font.render(f"x{combo_length}", True, BUTTON_ORANGE)
-                    combo_rect = combo_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
+                    combo_rect = combo_text.get_rect(center=(x + cell_size // 2, y + cell_size * 2 // 3))
                     game.screen.blit(combo_text, combo_rect)
             
             if value:
@@ -1118,8 +1128,8 @@ def draw_zoom_modal(game):
                 value_text = zoom_font.render(str(value), True, BLACK)
                 value_rect = value_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
                 game.screen.blit(value_text, value_rect)
-            elif not is_initial and game.pencil_marks[actual_row][actual_col]:
-                # Draw pencil marks
+            elif not is_initial and not game.admin_mode and game.pencil_marks[actual_row][actual_col]:
+                # Draw pencil marks (only when not in admin mode to avoid clutter)
                 marks = sorted(list(game.pencil_marks[actual_row][actual_col]))
                 pencil_font_size = int(cell_size * 0.2)
                 pencil_font = pygame.font.SysFont(FONT_NAME, pencil_font_size, bold=False, italic=False)
