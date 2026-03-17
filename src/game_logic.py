@@ -57,7 +57,7 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
     
     # Track progress for callbacks - use max position reached to avoid going backward during backtracking
     total_cells = grid_size * grid_size
-    max_position = [grid_size * box_size]  # Diagonal boxes already filled
+    max_position = [0]  # Start from 0, will track maximum grid position reached
     
     def progress_wrapper(row, col):
         """Wrapper to update progress during generation
@@ -66,7 +66,7 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
         Only updates progress when we reach a new maximum position to avoid
         progress going backward during backtracking.
         
-        Added by: Red Donaldson
+        Modified by: Red Donaldson
         Date: March 17, 2026
         """
         current_position = row * grid_size + col
