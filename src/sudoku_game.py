@@ -410,9 +410,9 @@ class SudokuGame:
             
             # If progress is None, it's a spinner-only update during backtracking
             if progress is None:
-                self.generation_spinner_angle = (self.generation_spinner_angle + 10) % 360
-                # Only render occasionally during backtracking to keep spinner moving
-                if current_time - last_render_time[0] >= 0.05:  # 20fps for spinner
+                self.generation_spinner_angle = (self.generation_spinner_angle + 3) % 360  # Slower rotation
+                # Only render occasionally during backtracking to avoid slowdown
+                if current_time - last_render_time[0] >= 0.2:  # 5fps for spinner during backtracking
                     last_render_time[0] = current_time
                     from ui_renderer import draw_generation_screen
                     draw_generation_screen(self)
@@ -429,7 +429,7 @@ class SudokuGame:
             last_render_time[0] = current_time
             self.generation_board = copy.deepcopy(board)
             self.generation_progress = progress
-            self.generation_spinner_angle = (self.generation_spinner_angle + 10) % 360
+            self.generation_spinner_angle = (self.generation_spinner_angle + 3) % 360  # Slower rotation
             
             # Render the generation screen
             from ui_renderer import draw_generation_screen

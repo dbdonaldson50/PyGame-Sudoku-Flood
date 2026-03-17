@@ -51,9 +51,12 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
     # Pre-fill diagonal boxes (safe optimization)
     _prefill_diagonal_boxes(board, grid_size, box_size, symbols)
     
-    # Call progress callback after diagonal boxes filled
+    # Pre-fill both diagonals for better visual and faster generation
+    _prefill_diagonals(board, grid_size, box_size, symbols)
+    
+    # Call progress callback after diagonal boxes and diagonals filled
     if progress_callback:
-        progress_callback(board, 0.1)
+        progress_callback(board, 0.15)
     
     # Track progress for callbacks - use max position reached to avoid going backward during backtracking
     total_cells = grid_size * grid_size
@@ -77,15 +80,16 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
         if should_update_progress:
             max_position[0] = current_position
         
-        # Call callback more frequently to keep spinner moving
-        # Progress only updates when advancing, spinner always updates
-        callback_frequency = max(10, grid_size)
-        if progress_callback and (current_position % callback_frequency == 0 or should_update_progress):
-            if should_update_progress:
-                progress = 0.1 + 0.9 * (current_position / total_cells)
+        # Call callback to update progress and spinner
+        # During backtracking, update spinner less frequently to avoid slowdown
+        if should_update_progress:
+            # Always update when making progress
+            if progress_callback:
+                progress = 0.15 + 0.85 * (current_position / total_cells)
                 progress_callback(board, min(0.99, progress))
-            else:
-                # During backtracking, call callback with current progress to update spinner
+        elif is_backtracking and progress_callback:
+            # During backtracking, only update spinner occasionally (every 100 cells)
+            if current_position % 100 == 0:
                 progress_callback(board, None)  # None signals spinner update only
     
     if _fill_board_simple(board, grid_size, box_size, symbols, 0, 0, progress_wrapper):
@@ -95,6 +99,39 @@ def generate_complete_sudoku(grid_size, box_size, symbols, progress_callback=Non
     
     # This should never happen
     raise Exception("Failed to generate valid Sudoku board")
+
+
+def get_valid_symbols(board, row, col, symbols, grid_size, box_size):
+    """Get list of symbols that can be placed at (row, col)
+    
+    Forward checking optimization: Pre-filter valid options.
+    Much faster than trying all symbols and checking validity.
+    
+    Added by: Red Donaldson
+    Date: March 17, 2026
+    """
+    used = set()
+    
+    # Collect symbols already used in row
+    for c in range(grid_size):
+        if board[row][c] is not None:
+            used.add(board[row][c])
+    
+    # Collect symbols already used in column
+    for r in range(grid_size):
+        if board[r][col] is not None:
+            used.add(board[r][col])
+    
+    # Collect symbols already used in box
+    box_row = (row // box_size) * box_size
+    box_col = (col // box_size) * box_size
+    for i in range(box_row, box_row + box_size):
+        for j in range(box_col, box_col + box_size):
+            if board[i][j] is not None:
+                used.add(board[i][j])
+    
+    # Return symbols not yet used
+    return [s for s in symbols if s not in used]
 
 
 def _prefill_diagonal_boxes(board, grid_size, box_size, symbols):
@@ -119,6 +156,32 @@ def _prefill_diagonal_boxes(board, grid_size, box_size, symbols):
             for j in range(box_start, box_start + box_size):
                 board[i][j] = shuffled_symbols[symbol_idx]
                 symbol_idx += 1
+
+
+def _prefill_diagonals(board, grid_size, box_size, symbols):
+    """Pre-fill both main and anti-diagonal with valid values
+    
+    This provides additional constraints and creates a nice visual pattern.
+    Only fills cells that aren't already filled by diagonal boxes.
+    Carefully checks validity to avoid conflicts.
+    
+    Added by: Red Donaldson
+    Date: March 17, 2026
+    """
+    # Fill main diagonal (top-left to bottom-right)
+    for i in range(grid_size):
+        if board[i][i] is None:  # Skip if already filled by diagonal box
+            valid_symbols = get_valid_symbols(board, i, i, symbols, grid_size, box_size)
+            if valid_symbols:
+                board[i][i] = random.choice(valid_symbols)
+    
+    # Fill anti-diagonal (top-right to bottom-left)
+    for i in range(grid_size):
+        j = grid_size - 1 - i
+        if board[i][j] is None:  # Skip if already filled
+            valid_symbols = get_valid_symbols(board, i, j, symbols, grid_size, box_size)
+            if valid_symbols:
+                board[i][j] = random.choice(valid_symbols)
 
 
 def _fill_first_row(board, grid_size, box_size, symbols_set,
@@ -480,39 +543,6 @@ def _fill_board_simple(board, grid_size, box_size, symbols, row, col, progress_c
             progress_callback(row, col, True)
     
     return False
-
-
-def get_valid_symbols(board, row, col, symbols, grid_size, box_size):
-    """Get list of symbols that can be placed at (row, col)
-    
-    Forward checking optimization: Pre-filter valid options.
-    Much faster than trying all symbols and checking validity.
-    
-    Added by: Red Donaldson
-    Date: March 17, 2026
-    """
-    used = set()
-    
-    # Collect symbols already used in row
-    for c in range(grid_size):
-        if board[row][c] is not None:
-            used.add(board[row][c])
-    
-    # Collect symbols already used in column
-    for r in range(grid_size):
-        if board[r][col] is not None:
-            used.add(board[r][col])
-    
-    # Collect symbols already used in box
-    box_row = (row // box_size) * box_size
-    box_col = (col // box_size) * box_size
-    for i in range(box_row, box_row + box_size):
-        for j in range(box_col, box_col + box_size):
-            if board[i][j] is not None:
-                used.add(board[i][j])
-    
-    # Return symbols not yet used
-    return [s for s in symbols if s not in used]
 
 
 def is_valid_placement(board, row, col, symbol, grid_size, box_size):
