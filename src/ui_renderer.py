@@ -528,13 +528,37 @@ def draw_board(game):
                     alpha_color = SELECTED_GLOW
                     pygame.draw.rect(game.screen, alpha_color, (x, y, cell_size, cell_size), thickness)
             
-            # Draw number, pencil marks, or nothing
+            # Draw number, pencil marks, or admin mode combo info
             if game.board[i][j] is not None:
                 # Draw the placed number
                 display_text = str(game.board[i][j])
                 num_text = game.cell_font.render(display_text, True, BLACK)
                 num_rect = num_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
                 game.screen.blit(num_text, num_rect)
+            elif game.admin_mode:
+                # In admin mode, show combo length for empty cells
+                # Added by: Red Donaldson, March 17, 2026
+                combo_length = game.calculate_potential_combo(i, j)
+                
+                # Draw correct value in cyan at top of cell
+                correct_value = str(game.solution[i][j])
+                value_font = game.pencil_font if game.grid_size >= 16 else game.cell_font
+                value_size = value_font.size(correct_value)
+                value_text = value_font.render(correct_value, True, CYAN)
+                value_rect = value_text.get_rect(center=(x + cell_size // 2, y + cell_size // 3))
+                game.screen.blit(value_text, value_rect)
+                
+                # Draw combo length in orange at bottom of cell
+                combo_text = f"↯{combo_length}" if combo_length > 0 else ""
+                if combo_text:
+                    combo_font = game.pencil_font
+                    combo_surface = combo_font.render(combo_text, True, BUTTON_ORANGE)
+                    combo_rect = combo_surface.get_rect(center=(x + cell_size // 2, y + cell_size * 2 // 3))
+                    game.screen.blit(combo_surface, combo_rect)
+                
+                # Also draw pencil marks if any exist
+                if game.pencil_marks[i][j]:
+                    draw_pencil_marks(game, i, j, x, y, cell_size)
             elif game.pencil_marks[i][j]:
                 # Draw pencil marks
                 draw_pencil_marks(game, i, j, x, y, cell_size)
@@ -1076,18 +1100,30 @@ def draw_zoom_modal(game):
             pygame.draw.rect(game.screen, cell_color, rect)
             pygame.draw.rect(game.screen, BLACK, rect, 2)
             
-            # Draw cell value or admin mode answer
+            # Draw cell value or admin mode info
             value = game.board[actual_row][actual_col]
             
-            # Show correct answer in admin mode
-            if game.admin_mode and not is_initial:
+            # Show correct answer and combo length in admin mode
+            # Updated by: Red Donaldson, March 17, 2026
+            if game.admin_mode and not is_initial and value is None:
+                # Calculate combo length for this cell
+                combo_length = game.calculate_potential_combo(actual_row, actual_col)
+                
+                # Draw correct value in cyan at top
                 correct_value = game.solution[actual_row][actual_col]
-                # Use larger font for zoom view
-                font_size = int(cell_size * 0.5)
+                font_size = int(cell_size * 0.4)
                 zoom_font = pygame.font.SysFont(FONT_NAME, font_size, bold=False, italic=False)
                 answer_text = zoom_font.render(str(correct_value), True, CYAN)
-                answer_rect = answer_text.get_rect(center=(x + cell_size // 2, y + cell_size // 2))
+                answer_rect = answer_text.get_rect(center=(x + cell_size // 2, y + cell_size // 3))
                 game.screen.blit(answer_text, answer_rect)
+                
+                # Draw combo length in orange at bottom
+                if combo_length > 0:
+                    combo_font_size = int(cell_size * 0.3)
+                    combo_font = pygame.font.SysFont(FONT_NAME, combo_font_size, bold=False, italic=False)
+                    combo_text = combo_font.render(f"↯{combo_length}", True, BUTTON_ORANGE)
+                    combo_rect = combo_text.get_rect(center=(x + cell_size // 2, y + cell_size * 2 // 3))
+                    game.screen.blit(combo_text, combo_rect)
             
             if value:
                 # Use larger font for zoom view

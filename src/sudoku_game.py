@@ -649,6 +649,34 @@ class SudokuGame:
         """Reset combo to zero"""
         self.update_combo(increment=False)
     
+    def calculate_potential_combo(self, row, col):
+        """Calculate how many cells would auto-fill if we place the correct value
+        
+        Added by: Red Donaldson
+        Date: March 17, 2026
+        
+        Args:
+            row: Row of the cell to test
+            col: Column of the cell to test
+        
+        Returns:
+            int: Number of cells that would auto-fill (combo length)
+        """
+        # Only calculate for empty cells
+        if self.board[row][col] is not None:
+            return 0
+        
+        # Create a temporary board with the correct value placed
+        temp_board = [r[:] for r in self.board]
+        temp_board[row][col] = self.solution[row][col]
+        
+        # Find cells that would auto-fill
+        filled_sequence = game_logic.find_auto_fill_cells(
+            temp_board, self.initial_board, self.grid_size, self.box_size, self.symbols, (row, col)
+        )
+        
+        return len(filled_sequence)
+    
     def add_floating_points(self, x, y, points, color):
         """Add a floating point animation"""
         self.floating_points.append({
