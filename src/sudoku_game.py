@@ -436,9 +436,22 @@ class SudokuGame:
             render_count[0] += 1
             
             # CRITICAL: Copy board frequently during early phase (diagonal filling),
-            # then reduce to every 5th render to save memory
-            # This shows the main diagonal pattern while still preventing crashes
-            if progress < 0.35 or render_count[0] % 5 == 0 or progress >= 0.99:
+            # then reduce to every 10th render to save memory and prevent crashes
+            # Fixed for 16x16 crashes by: Red Donaldson, March 17, 2026
+            # 
+            # Early phase (< 40%): Copy every render to show diagonal pattern
+            # Mid phase (40-80%): Copy every 5th render to balance visibility and memory
+            # Late phase (> 80%): Copy every 10th render to minimize memory pressure
+            # Always copy at 99% to show final state
+            if progress < 0.40:
+                # Show diagonal filling phase clearly
+                self.generation_board = copy.deepcopy(board)
+            elif progress < 0.80:
+                # Balance between visual updates and memory conservation
+                if render_count[0] % 5 == 0:
+                    self.generation_board = copy.deepcopy(board)
+            elif render_count[0] % 10 == 0 or progress >= 0.99:
+                # Minimize memory pressure during heavy backtracking
                 self.generation_board = copy.deepcopy(board)
             
             self.generation_progress = progress

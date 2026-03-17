@@ -539,16 +539,23 @@ def draw_board(game):
                 # Draw pencil marks
                 draw_pencil_marks(game, i, j, x, y, cell_size)
     
-    # Draw thick lines for boxes
-    for i in range(0, game.grid_size + 1, game.box_size):
-        # Horizontal
+    # Draw thick lines for internal box boundaries only
+    # Fixed by: Red Donaldson, March 17, 2026
+    # Issue: Lines at grid edges (i=0, i=grid_size) with thickness 3 extended beyond board bounds
+    # Solution: Draw internal box lines separately, then draw outer border with rect
+    for i in range(game.box_size, game.grid_size, game.box_size):
+        # Horizontal internal box lines
         pygame.draw.line(game.screen, BLACK,
                        (game.BOARD_X, BOARD_Y + i * cell_size),
                        (game.BOARD_X + game.BOARD_SIZE, BOARD_Y + i * cell_size), 3)
-        # Vertical
+        # Vertical internal box lines
         pygame.draw.line(game.screen, BLACK,
                        (game.BOARD_X + i * cell_size, BOARD_Y),
                        (game.BOARD_X + i * cell_size, BOARD_Y + game.BOARD_SIZE), 3)
+    
+    # Draw outer border as a rectangle to contain everything precisely
+    pygame.draw.rect(game.screen, BLACK, 
+                    (game.BOARD_X, BOARD_Y, game.BOARD_SIZE, game.BOARD_SIZE), 3)
 
 
 def draw_pencil_marks(game, row, col, x, y, cell_size):
