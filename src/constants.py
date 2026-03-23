@@ -79,7 +79,7 @@ DIFFICULTY_SETTINGS = {
 }
 
 # Animation settings
-ANIMATION_SPEED = 5  # frames per cell transition (reduced from 10 for faster animation)
+ANIMATION_SPEED = 10  # frames per cell transition
 FPS = 60
 
 # UI Enhancement settings
