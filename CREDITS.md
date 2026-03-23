@@ -19,59 +19,37 @@ All audio assets used in Sudoku Flash are from royalty-free/Creative Commons sou
 ## Sound Effects
 
 ### correct.wav
-- **Title**: "Collect Point 00"
-- **Author**: Bertrof
-- **Source**: https://freesound.org/people/Bertrof/sounds/351566/
-- **License**: CC0 (Public Domain)
+- **Attribution**: "Collect Point 00" by Bertrof ( https://freesound.org/people/Bertrof/sounds/351566/ ) licensed under CC0 1.0
 - **Description**: Pleasant chime sound for correct answer
 - **Usage**: Played when player places a correct number
 
 ### wrong.wav
-- **Title**: "Error Sound"
-- **Author**: Bertrof
-- **Source**: https://freesound.org/people/Bertrof/sounds/131657/
-- **License**: CC BY 3.0
-- **Attribution Required**: "Error Sound" by Bertrof (https://freesound.org/people/Bertrof/)
+- **Attribution**: "Error Sound" by Bertrof ( https://freesound.org/people/Bertrof/sounds/131657/ ) licensed under CC-BY 3.0
 - **Description**: Buzzer sound for incorrect answer
 - **Usage**: Played when player makes a mistake (loses a life)
 
 ### hint.wav
-- **Title**: "UI Quirky 35"
-- **Author**: dland
-- **Source**: https://freesound.org/people/dland/sounds/320181/
-- **License**: CC0 (Public Domain)
+- **Attribution**: "UI Quirky 35" by dland ( https://freesound.org/people/dland/sounds/320181/ ) licensed under CC0 1.0
 - **Description**: Soft magical chime sound
 - **Usage**: Played when player uses a hint
 
 ### undo.wav
-- **Title**: "Keyboard Key Press 5"
-- **Author**: hotpin7
-- **Source**: https://freesound.org/people/hotpin7/sounds/843083/
-- **License**: CC0 (Public Domain)
+- **Attribution**: "Keyboard Key Press 5" by hotpin7 ( https://freesound.org/people/hotpin7/sounds/843083/ ) licensed under CC0 1.0
 - **Description**: Soft click sound
 - **Usage**: Played when player undoes a move
 
 ### button.wav
-- **Title**: "Menu Click"
-- **Author**: Leszek_Szary
-- **Source**: https://freesound.org/people/Leszek_Szary/sounds/146718/
-- **License**: CC0 (Public Domain)
+- **Attribution**: "Menu Click" by Leszek_Szary ( https://freesound.org/people/Leszek_Szary/sounds/146718/ ) licensed under CC0 1.0
 - **Description**: Simple button click
 - **Usage**: Played for general button clicks (menu, settings, etc.)
 
 ### win.wav
-- **Title**: "Power Up"
-- **Author**: plasterbrain
-- **Source**: https://freesound.org/people/plasterbrain/sounds/397355/
-- **License**: CC0 (Public Domain)
+- **Attribution**: "Power Up" by plasterbrain ( https://freesound.org/people/plasterbrain/sounds/397355/ ) licensed under CC0 1.0
 - **Description**: Triumphant victory fanfare
 - **Usage**: Played when player completes the puzzle
 
 ### combo.wav
-- **Title**: "Power Up"
-- **Author**: plasterbrain
-- **Source**: https://freesound.org/people/plasterbrain/sounds/397355/
-- **License**: CC0 (Public Domain)
+- **Attribution**: "Power Up" by plasterbrain ( https://freesound.org/people/plasterbrain/sounds/397355/ ) licensed under CC0 1.0
 - **Description**: Uplifting achievement sound
 - **Usage**: Played for combo achievements (same file as win.wav)
 

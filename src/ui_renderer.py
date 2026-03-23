@@ -194,18 +194,15 @@ def draw_credits_modal(game):
         "• 'Puzzle Game 3' by Memoraphile (CC0)",
         "  OpenGameArt.org",
         "",
-        "Sound Effects:",
+        "Sound Effects (freesound.org):",
         "• Correct: 'Collect Point 00' by Bertrof (CC0)",
-        "• Wrong: 'Error Sound' by Bertrof (CC BY 3.0)",
+        "• Wrong: 'Error Sound' by Bertrof (CC-BY 3.0)",
         "• Hint: 'UI Quirky 35' by dland (CC0)",
         "• Undo: 'Keyboard Key Press 5' by hotpin7 (CC0)",
         "• Button: 'Menu Click' by Leszek_Szary (CC0)",
-        "• Win: 'Power Up' by plasterbrain (CC0)",
-        "• Combo: 'Power Up' by plasterbrain (CC0)",
+        "• Win/Combo: 'Power Up' by plasterbrain (CC0)",
         "",
-        "Sources: freesound.org, OpenGameArt.org",
-        "",
-        "See CREDITS.md for full details and download links",
+        "See CREDITS.md for full attribution details",
     ]
     
     y_offset = modal.top + 85
