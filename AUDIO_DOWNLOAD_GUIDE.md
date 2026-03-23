@@ -22,9 +22,9 @@ The directories have already been created by the game setup.
 **Location**: `assets/music/background.ogg`
 
 **Download Steps**:
-1. Visit: https://opengameart.org/content/puzzle-game-1
+1. Visit: https://opengameart.org/content/puzzle-game-3
 2. Click "Download" button
-3. Download the file (usually named something like "puzzle-game-1.ogg")
+3. Download the file (usually named something like "puzzle-game-3.ogg")
 4. Rename to `background.ogg`
 5. Place in `assets/music/` directory
 
@@ -39,13 +39,13 @@ The directories have already been created by the game setup.
 **Location**: `assets/sounds/correct.wav`
 
 **Download Steps**:
-1. Visit: https://freesound.org/people/unadamlar/sounds/341985/
+1. Visit: https://freesound.org/people/Bertrof/sounds/351566/
 2. Click "Download" button (you may need a free Freesound account)
 3. Save as `correct.wav`
 4. Place in `assets/sounds/` directory
 
 **License**: CC0 (Public Domain)
-**Author**: unadamlar
+**Author**: Bertrof
 
 ---
 
@@ -68,13 +68,13 @@ The directories have already been created by the game setup.
 **Location**: `assets/sounds/hint.wav`
 
 **Download Steps**:
-1. Visit: https://freesound.org/people/Kastenfrosch/sounds/521950/
+1. Visit: https://freesound.org/people/dland/sounds/320181/
 2. Click "Download" button
 3. Save as `hint.wav`
 4. Place in `assets/sounds/` directory
 
 **License**: CC0 (Public Domain)
-**Author**: Kastenfrosch
+**Author**: dland
 
 ---
 
@@ -82,14 +82,13 @@ The directories have already been created by the game setup.
 **Location**: `assets/sounds/undo.wav`
 
 **Download Steps**:
-1. Visit: https://freesound.org/people/NenadSimic/sounds/171697/
+1. Visit: https://freesound.org/people/hotpin7/sounds/843083/
 2. Click "Download" button
 3. Save as `undo.wav`
 4. Place in `assets/sounds/` directory
 
-**License**: CC BY 3.0
-**Author**: NenadSimic
-**Attribution**: Required (automatically included in CREDITS.md)
+**License**: CC0 (Public Domain)
+**Author**: hotpin7
 
 ---
 
@@ -97,13 +96,13 @@ The directories have already been created by the game setup.
 **Location**: `assets/sounds/button.wav`
 
 **Download Steps**:
-1. Visit: https://freesound.org/people/fins/sounds/146718/
+1. Visit: https://freesound.org/people/Leszek_Szary/sounds/146718/
 2. Click "Download" button
 3. Save as `button.wav`
 4. Place in `assets/sounds/` directory
 
 **License**: CC0 (Public Domain)
-**Author**: fins
+**Author**: Leszek_Szary
 
 ---
 
@@ -111,13 +110,13 @@ The directories have already been created by the game setup.
 **Location**: `assets/sounds/win.wav`
 
 **Download Steps**:
-1. Visit: https://freesound.org/people/FunWithSound/sounds/456966/
+1. Visit: https://freesound.org/people/plasterbrain/sounds/397355/
 2. Click "Download" button
 3. Save as `win.wav`
 4. Place in `assets/sounds/` directory
 
 **License**: CC0 (Public Domain)
-**Author**: FunWithSound
+**Author**: plasterbrain
 
 ---
 

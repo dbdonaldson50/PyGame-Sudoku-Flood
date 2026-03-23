@@ -7,9 +7,9 @@ All audio assets used in Sudoku Flash are from royalty-free/Creative Commons sou
 ## Background Music
 
 ### background.ogg
-- **Title**: "Puzzle Game 1"
+- **Title**: "Puzzle Game 3"
 - **Author**: Memoraphile (memoraphile@mail.com)  
-- **Source**: https://opengameart.org/content/puzzle-game-1
+- **Source**: https://opengameart.org/content/puzzle-game-3
 - **License**: CC0 (Public Domain)
 - **Description**: Calm, ambient puzzle game background music
 - **Usage**: Main gameplay background music (looping)
@@ -19,9 +19,9 @@ All audio assets used in Sudoku Flash are from royalty-free/Creative Commons sou
 ## Sound Effects
 
 ### correct.wav
-- **Title**: "Correct Sound Effect"
-- **Author**: unadamlar
-- **Source**: https://freesound.org/people/unadamlar/sounds/341985/
+- **Title**: "Collect Point 00"
+- **Author**: Bertrof
+- **Source**: https://freesound.org/people/Bertrof/sounds/351566/
 - **License**: CC0 (Public Domain)
 - **Description**: Pleasant chime sound for correct answer
 - **Usage**: Played when player places a correct number
@@ -36,34 +36,33 @@ All audio assets used in Sudoku Flash are from royalty-free/Creative Commons sou
 - **Usage**: Played when player makes a mistake (loses a life)
 
 ### hint.wav
-- **Title**: "Magical Spell Sound"
-- **Author**: Kastenfrosch
-- **Source**: https://freesound.org/people/Kastenfrosch/sounds/521950/
+- **Title**: "UI Quirky 35"
+- **Author**: dland
+- **Source**: https://freesound.org/people/dland/sounds/320181/
 - **License**: CC0 (Public Domain)
 - **Description**: Soft magical chime sound
 - **Usage**: Played when player uses a hint
 
 ### undo.wav
-- **Title**: "Button Click - Menu Selection"
-- **Author**: NenadSimic
-- **Source**: https://freesound.org/people/NenadSimic/sounds/171697/
-- **License**: CC BY 3.0
-- **Attribution Required**: "Button Click" by NenadSimic (https://freesound.org/people/NenadSimic/)
+- **Title**: "Keyboard Key Press 5"
+- **Author**: hotpin7
+- **Source**: https://freesound.org/people/hotpin7/sounds/843083/
+- **License**: CC0 (Public Domain)
 - **Description**: Soft click sound
 - **Usage**: Played when player undoes a move
 
 ### button.wav
-- **Title**: "Click Sound"
-- **Author**: fins
-- **Source**: https://freesound.org/people/fins/sounds/146718/
+- **Title**: "Menu Click"
+- **Author**: Leszek_Szary
+- **Source**: https://freesound.org/people/Leszek_Szary/sounds/146718/
 - **License**: CC0 (Public Domain)
 - **Description**: Simple button click
 - **Usage**: Played for general button clicks (menu, settings, etc.)
 
 ### win.wav
-- **Title**: "Level Complete / Win"
-- **Author**: FunWithSound
-- **Source**: https://freesound.org/people/FunWithSound/sounds/456966/
+- **Title**: "Power Up"
+- **Author**: plasterbrain
+- **Source**: https://freesound.org/people/plasterbrain/sounds/397355/
 - **License**: CC0 (Public Domain)
 - **Description**: Triumphant victory fanfare
 - **Usage**: Played when player completes the puzzle
@@ -74,7 +73,7 @@ All audio assets used in Sudoku Flash are from royalty-free/Creative Commons sou
 - **Source**: https://freesound.org/people/plasterbrain/sounds/397355/
 - **License**: CC0 (Public Domain)
 - **Description**: Uplifting achievement sound
-- **Usage**: Played for combo achievements (optional)
+- **Usage**: Played for combo achievements (same file as win.wav)
 
 ---
 
