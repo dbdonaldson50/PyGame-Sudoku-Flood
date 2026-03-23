@@ -915,6 +915,36 @@ def draw_settings_modal(game):
     sfx_percent_rect = sfx_percent_text.get_rect(midleft=(sfx_slider.right + 10, sfx_slider.centery))
     game.screen.blit(sfx_percent_text, sfx_percent_rect)
     
+    # Animation speed slider
+    # Added by: Red Donaldson, March 23, 2026
+    anim_label_y = modal.top + 255  # Label above slider
+    anim_label = game.medium_font.render("Laser Speed:", True, BLACK)
+    anim_label_rect = anim_label.get_rect(midleft=(modal.left + 40, anim_label_y))
+    game.screen.blit(anim_label, anim_label_rect)
+    
+    # Draw slider track
+    anim_slider = game.buttons['animation_slider']
+    pygame.draw.rect(game.screen, GRAY, anim_slider, border_radius=4)
+    pygame.draw.rect(game.screen, BLACK, anim_slider, 1, border_radius=4)
+    
+    # Animation speed: 5 (fast) to 20 (slow) frames
+    # Normalize to 0.0-1.0 range (inverted: lower value = faster = left side)
+    anim_normalized = (20 - game.animation_speed) / 15.0  # 20-5=15 range, inverted
+    
+    # Draw slider fill
+    anim_fill_width = int(anim_slider.width * anim_normalized)
+    if anim_fill_width > 0:
+        anim_fill_rect = pygame.Rect(anim_slider.x, anim_slider.y, anim_fill_width, anim_slider.height)
+        pygame.draw.rect(game.screen, PURPLE, anim_fill_rect, border_radius=4)
+    
+    # Draw slider handle
+    anim_handle_x = anim_slider.x + anim_fill_width
+    anim_handle_rect = pygame.Rect(anim_handle_x - 5, anim_slider.y - 4, 10, anim_slider.height + 8)
+    pygame.draw.rect(game.screen, WHITE, anim_handle_rect, border_radius=5)
+    pygame.draw.rect(game.screen, BLACK, anim_handle_rect, 2, border_radius=5)
+    
+    # Speed label (Slow/Medium/Fast)\n    if game.animation_speed <= 7:\n        speed_label = \"Fast\"\n    elif game.animation_speed <= 13:\n        speed_label = \"Medium\"\n    else:\n        speed_label = \"Slow\"\n    speed_text = game.small_font.render(speed_label, True, BLACK)\n    speed_rect = speed_text.get_rect(midleft=(anim_slider.right + 10, anim_slider.centery))\n    game.screen.blit(speed_text, speed_rect)
+    
     # FIX: Removed "Check Solution" button - Red Donaldson, March 15, 2026
     # REASON: Redundant with lives system which provides instant feedback.
     # With instant wrong-answer penalties, players already know their status.

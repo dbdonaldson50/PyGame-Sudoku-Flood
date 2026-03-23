@@ -129,6 +129,9 @@ class SudokuGame:
         self.laser_particles = []
         self.laser_source = None
         
+        # Load game settings (animation speed)
+        self.load_game_settings()
+        
         # Difficulty settings
         self.difficulty_settings = DIFFICULTY_SETTINGS
         
@@ -234,8 +237,9 @@ class SudokuGame:
         # FIX: Increased modal width and button widths to prevent text overflow - Red Donaldson, March 15, 2026
         # Med (16x16) needs 163px, Hard (25x25) needs 176px, Check Solution needs 202px
         # FIX: Increased modal height to accommodate audio controls - Red Donaldson, March 16, 2026
+        # FIX: Increased modal height to accommodate animation speed slider - Red Donaldson, March 23, 2026
         modal_width = 600  # Increased from 400 to accommodate wider buttons
-        modal_height = 380  # Increased from 300 to fit volume sliders and sound toggle
+        modal_height = 450  # Increased from 380 to fit animation speed slider
         modal_x = (self.WINDOW_WIDTH - modal_width) // 2
         modal_y = (self.WINDOW_HEIGHT - modal_height) // 2
         
@@ -324,10 +328,14 @@ class SudokuGame:
         self.buttons['music_slider'] = pygame.Rect(slider_x, slider_y, slider_width, slider_height)
         self.buttons['sfx_slider'] = pygame.Rect(slider_x, slider_y + 45, slider_width, slider_height)
         
+        # Animation speed slider - positioned below SFX slider
+        # Added by: Red Donaldson, March 23, 2026
+        self.buttons['animation_slider'] = pygame.Rect(slider_x, slider_y + 90, slider_width, slider_height)
+        
         # Sound toggle button in settings - positioned below volume sliders
         sound_toggle_width = 150
         sound_toggle_x = modal_x + (modal_width - sound_toggle_width) // 2
-        self.buttons['sound_toggle'] = pygame.Rect(sound_toggle_x, modal_y + 260, sound_toggle_width, 35)
+        self.buttons['sound_toggle'] = pygame.Rect(sound_toggle_x, modal_y + 310, sound_toggle_width, 35)
     
     def update_cell_font(self):
         """Update cell font size based on grid size with proper spacing"""
@@ -357,6 +365,39 @@ class SudokuGame:
         except:
             self.cell_font = pygame.font.SysFont(FONT_FALLBACK, font_size, bold=False, italic=False)
             self.pencil_font = pygame.font.SysFont(FONT_FALLBACK, pencil_size, bold=False, italic=False)
+    
+    def load_game_settings(self):
+        """Load game settings (animation speed) from file"""
+        # Added by: Red Donaldson, March 23, 2026
+        import json
+        import os
+        try:
+            settings_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'game_settings.json')
+            if os.path.exists(settings_file):
+                with open(settings_file, 'r') as f:
+                    settings = json.load(f)
+                    # Animation speed: 5 (fast) to 20 (slow) frames per cell
+                    self.animation_speed = settings.get('animation_speed', ANIMATION_SPEED)
+                    # Clamp to valid range
+                    self.animation_speed = max(5, min(20, self.animation_speed))
+        except Exception as e:
+            print(f"Warning: Could not load game settings: {e}")
+            self.animation_speed = ANIMATION_SPEED
+    
+    def save_game_settings(self):
+        """Save game settings (animation speed) to file"""
+        # Added by: Red Donaldson, March 23, 2026
+        import json
+        import os
+        settings = {
+            'animation_speed': self.animation_speed
+        }
+        try:
+            settings_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'game_settings.json')
+            with open(settings_file, 'w') as f:
+                json.dump(settings, f, indent=2)
+        except Exception as e:
+            print(f"Warning: Could not save game settings: {e}")
     
     def new_game(self):
         """Start a new game"""
@@ -1228,6 +1269,18 @@ class SudokuGame:
                     volume = relative_x / slider_rect.width
                     self.audio.set_sfx_volume(volume)
                     # Play a test sound
+                    self.audio.play_sound('button')
+                elif self.buttons['animation_slider'].collidepoint(pos):
+                    # Calculate animation speed from click position
+                    # Added by: Red Donaldson, March 23, 2026
+                    slider_rect = self.buttons['animation_slider']
+                    relative_x = pos[0] - slider_rect.x
+                    normalized = relative_x / slider_rect.width
+                    # Invert: left = fast (5), right = slow (20)
+                    self.animation_speed = int(20 - (normalized * 15))
+                    # Clamp to valid range
+                    self.animation_speed = max(5, min(20, self.animation_speed))
+                    self.save_game_settings()
                     self.audio.play_sound('button')
                 # FIX: Removed 'check' button handler - Red Donaldson, March 15, 2026
                 # Check Solution feature removed as redundant with lives system
