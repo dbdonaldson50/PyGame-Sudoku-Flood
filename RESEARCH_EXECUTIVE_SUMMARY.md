@@ -49,22 +49,24 @@ Investigate two key questions:
 
 #### Performance Comparison (25×25 Puzzle Generation)
 ```
-Current (Python):     0.40s  [Baseline]
-Flutter (Dart):       0.15s  ⬆️  2.7x FASTER
-React Native (JS):    0.60s  ⬇️  1.5x slower
-Kivy (Python):        2.50s  ⬇️  6x slower ❌
-Native (Swift/Kotlin): 0.08s  ⬆️  5x faster (but 2x cost)
+Current (Python):      0.40s  [Baseline]
+Flutter (Dart):        0.15s  ⬆️  2.7x FASTER
+React Native (JS):     0.60s  ⬇️  1.5x slower
+Kivy (Python):         2.50s  ⬇️  6x slower ❌
+Native (Swift/Kotlin): 0.08s  ⬆️  5x faster (but 2x time commitment)
 ```
 
 #### Framework Evaluation Matrix
 
-| Framework | Timeline | Cost | Performance | Mobile? | Score |
-|-----------|----------|------|-------------|---------|-------|
-| **Flutter** | 8 weeks | $33K | Excellent | ✅ iOS/Android/Web | **8.95/10** ⭐ |
-| React Native | 9 weeks | $37K | Good | ✅ iOS/Android | 7.60/10 |
-| Native | 12 weeks | $49K | Best | ✅ iOS/Android | 7.30/10 |
-| Godot | 8 weeks | $33K | Good | ✅ iOS/Android | 7.15/10 |
-| **Kivy (Python)** | 7 weeks | $29K | Poor | ⚠️  iOS/Android | **5.35/10** ❌ |
+| Framework | Time Investment | Out-of-Pocket | Performance | Mobile? | Score |
+|-----------|-----------------|---------------|-------------|---------|-------|
+| **Flutter** | 320 hrs (8 wks) | $124 | Excellent | ✅ iOS/Android/Web | **8.95/10** ⭐ |
+| React Native | 360 hrs (9 wks) | $124 | Good | ✅ iOS/Android | 7.60/10 |
+| Native | 480 hrs (12 wks) | $124 | Best | ✅ iOS/Android | 7.30/10 |
+| Godot | 320 hrs (8 wks) | $124 | Good | ✅ iOS/Android | 7.15/10 |
+| **Kivy (Python)** | 280 hrs (7 wks) | $124 | Poor | ⚠️  iOS/Android | **5.35/10** ❌ |
+
+*Note: Original research included professional developer costs ($75-100/hr) for hiring scenarios. As a solo developer, your only real costs are app store fees ($124). Time investment is your primary consideration.*
 
 **Why Flutter Wins:**
 1. ✅ **2.7x faster** puzzle generation (compiled Dart vs interpreted Python)
@@ -94,7 +96,7 @@ Despite keeping the same language, Kivy has critical flaws:
 
 **Pros:**
 - ✅ Fast (8-12 days)
-- ✅ Low cost ($12-16K)
+- ✅ Minimal out-of-pocket cost ($0)
 - ✅ Keep existing Python codebase
 - ✅ Modern look and feel
 
@@ -104,8 +106,8 @@ Despite keeping the same language, Kivy has critical flaws:
 - ❌ Limited touch support
 - ❌ Pygame not designed for mobile
 
-**Timeline:** 2 weeks  
-**Cost:** $12-16K  
+**Time Investment:** 80-96 hours (2 weeks)  
+**Out-of-Pocket Cost:** $0 (optional: $50-100 for premium fonts/assets)  
 **Result:** Modern-looking desktop game
 
 ---
@@ -125,21 +127,21 @@ Despite keeping the same language, Kivy has critical flaws:
 **Cons:**
 - ⚠️  Learning curve (Dart language, Flutter framework)
 - ⚠️  Full rewrite required (~4000 LOC)
-- ⚠️  8-week timeline
-- ⚠️  Higher upfront cost
+- ⚠️  8-week time commitment
+- ⚠️  App store fees ($124 one-time/annual)
 
-**Timeline:** 8 weeks  
-**Cost:** $33K first year (includes app store setup)  
+**Time Investment:** 320 hours (8 weeks full-time)  
+**Out-of-Pocket Cost:** $124 (iOS Dev $99/year + Google Play $25 one-time)  
 **Result:** Professional mobile game on all platforms
 
-**ROI:** Break-even in 5-6 months with mobile revenue
+**Potential ROI:** $40-60K/year mobile revenue = $125-188/hour return on time invested
 
 ---
 
 ### Path 3: Hybrid Approach (Modernize Now, Convert Later)
 **Best for:** Risk mitigation with staged investment
 
-**Phase 1:** Modernize Pygame UI (2 weeks, $12K)
+**Phase 1:** Modernize Pygame UI (2 weeks, ~80 hours)
 - Immediate visual improvements
 - Validate modern UI direction
 - Continue desktop development
@@ -149,68 +151,89 @@ Despite keeping the same language, Kivy has critical flaws:
 - Assess demand for mobile version
 - Gather mobile feature requirements
 
-**Phase 3:** Flutter conversion if validated (8 weeks, $33K)
+**Phase 3:** Flutter conversion if validated (8 weeks, ~320 hours)
 - Informed mobile feature set
 - Proven UI/UX patterns
 - Lower risk from market validation
 
-**Total Timeline:** 10-11 weeks (with evaluation gap)  
-**Total Cost:** $45K  
+**Total Time Investment:** 400 hours over 10-11 weeks (with evaluation gap)  
+**Out-of-Pocket Cost:** $124 (only when/if pursuing Phase 3)  
 **Result:** De-risked mobile entry with modern desktop app
 
 ---
 
-## 📈 Business Case: Flutter Conversion
+## 📈 Time Investment Analysis: Flutter Conversion
 
-### Investment Breakdown
-- **Development:** $33,124 (8 weeks @ 40 hrs/week)
-  - Core logic conversion: 2 weeks
-  - State management: 1 week
-  - UI development: 3 weeks
-  - Testing & polish: 2 weeks
-- **App Store Setup:** Included
-  - iOS Developer Account ($99/year)
-  - Google Play Developer ($25 one-time)
-  - SSL certificates, backend setup
+### Time Breakdown (320 hours total)
+- **Core logic conversion:** 80 hours (2 weeks)
+  - Translate game_logic.py to Dart
+  - Port validation and generation algorithms
+- **State management:** 40 hours (1 week)
+  - Implement Provider pattern for game state
+  - Handle undo/redo, scoring, lives
+- **UI development:** 120 hours (3 weeks)
+  - Build responsive layouts for mobile/tablet/desktop
+  - Implement animations and touch interactions
+  - Create modern Material Design 3 interface
+- **Testing & polish:** 80 hours (2 weeks)
+  - Cross-platform testing (iOS, Android, Web, Desktop)
+  - Performance optimization
+  - App store submission prep
 
-### Revenue Potential (Year 2+)
+### Out-of-Pocket Expenses
+- **iOS Developer Account:** $99/year (required for iOS App Store)
+- **Google Play Developer:** $25 one-time (required for Android)
+- **Total:** $124 first year, then $99/year
+
+### Revenue Potential (if monetized)
 - **Mobile Freemium Model:**
   - Free: Basic puzzles (9×9)
-  - Premium: $4.99 unlock (16×16, 25×25, themes, stats)
-  - Expected conversion: 5-8%
-- **Desktop Premium:** $9.99 one-time
-- **Projected Annual Revenue:** $40-60K (conservative)
+  - Premium unlock: $4.99 (16×16, 25×25, themes, stats)
+  - Expected conversion rate: 5-8% of users
+- **Desktop Premium:** $9.99 one-time purchase
+- **Projected Annual Revenue:** $40-60K (conservative estimate)
 
-### ROI Timeline
-- **Break-even:** 5-6 months post-launch
-- **Year 1 Net:** -$10K (investment year)
-- **Year 2+ Net:** +$40K/year profit
-- **5-Year ROI:** 500%+
+### Return on Time Investment
+- **320 hours invested**
+- **Year 2+ earnings:** $40-60K/year
+- **Effective hourly rate:** $125-188/hour return on your time
+- **Payback period:** ~160 hours of investment pays back in Year 1
+- **5-Year return:** $200-300K total / 320 hours = $625-938/hour
+
+### Opportunity Cost Question
+What else could you do with 320 hours (8 weeks)?
+- Another project/product?
+- Contract work at market rate (~$75-100/hour = $24-32K)?
+- Learning other technologies?
+- Personal time/leisure value?
+
+Compare against Flutter's potential: $125-188/hour return suggests strong investment.
 
 ---
 
 ## 🔑 Critical Decision Factors
 
 ### Choose Path 1 (Modernize Pygame) if:
-- [ ] Budget limited to <$20K
-- [ ] Timeline critical (<3 weeks)
+- [ ] Time limited to <2 weeks
+- [ ] Want immediate visual improvements
 - [ ] Desktop-only audience is sufficient
 - [ ] Mobile deployment not needed
-- [ ] Minimal risk tolerance
+- [ ] Minimal commitment desired
 
 ### Choose Path 2 (Flutter) if:
 - [x] Want true mobile app (iOS/Android app stores)
 - [x] Need significant performance improvement
 - [x] Planning long-term mobile growth
-- [x] Can invest $33K and 8 weeks
+- [x] Can invest 320 hours over 8 weeks
 - [x] Want modern, native mobile UX
+- [x] Seeking strong return on time investment ($125-188/hour)
 
 ### Choose Path 3 (Hybrid) if:
 - [ ] Uncertain about mobile market demand
 - [ ] Want to test modern UI first
-- [ ] Prefer staged investment
+- [ ] Prefer staged time commitment
 - [ ] Can wait 3-6 months for mobile
-- [ ] Want to minimize risk
+- [ ] Want to minimize risk before full investment
 
 ---
 
@@ -254,27 +277,27 @@ All detailed findings are in the `research/mobile-modernization` branch:
    - Skim MOBILE_MODERNIZATION_TECHNICAL_REPORT.md for technical details
 
 2. **Make Strategic Decision** (1 week)
-   - Assess budget availability ($12-45K range)
-   - Define timeline constraints (2-11 weeks)
-   - Determine platform priorities (desktop vs mobile)
-   - Evaluate risk tolerance
+   - Determine available time (80-400 hours over 2-11 weeks)
+   - Assess out-of-pocket budget ($0-124 for app store fees)
+   - Define platform priorities (desktop vs mobile)
+   - Evaluate opportunity cost (what else could you do with that time?)
 
 3. **If Choosing Flutter (Recommended):**
-   - [ ] Approve $33K budget
-   - [ ] Allocate 8-week development window
+   - [ ] Commit to 320-hour time investment (8 weeks)
+   - [ ] Budget $124 for app store fees
    - [ ] Install Flutter SDK (30 minutes)
-   - [ ] Complete 2-week proof-of-concept
+   - [ ] Complete 2-week proof-of-concept (80 hours)
      - Port puzzle generation algorithm
      - Build basic UI with 9×9 grid
      - Benchmark performance on mobile devices
-   - [ ] Review proof-of-concept before full commitment
-   - [ ] Proceed with full 8-week implementation
+   - [ ] Review proof-of-concept results
+   - [ ] Decide: proceed with full implementation or pivot
 
 4. **If Choosing Pygame Modernization:**
-   - [ ] Approve $12-16K budget
-   - [ ] Allocate 2-week development window
+   - [ ] Commit to 80-96 hour time investment (2 weeks)
+   - [ ] Optional: Budget $50-100 for premium fonts/assets
    - [ ] Start with Phase 1 (colors + typography + cards)
-   - [ ] Review visual progress after 1 week
+   - [ ] Review visual progress after 1 week (~40 hours)
    - [ ] Complete remaining phases (animations + icons)
 
 ---
@@ -324,19 +347,29 @@ After comprehensive research, I recommend **converting to Flutter (Dart)** for t
    - 60+ FPS smooth animations
    - Excellent developer experience (hot reload, debugging tools)
 
-3. **Business Viability**
-   - $33K investment with 5-6 month break-even
-   - Sustainable mobile revenue potential
-   - Positions project for long-term growth
+3. **Strong Return on Time**
+   - 320 hours invested
+   - Potential: $40-60K/year revenue
+   - Effective rate: $125-188/hour return
+   - Compares favorably to contract work or other projects
 
 4. **Low Technical Risk**
    - Straightforward algorithm translation (Python → Dart is nearly 1:1)
-   - 2-week proof-of-concept validates approach before full commitment
+   - 2-week proof-of-concept (80 hours) validates approach before full commitment
    - Strong ecosystem and community support
+
+5. **Minimal Financial Risk**
+   - Only $124 out-of-pocket for app store fees
+   - No hardware/software purchases needed (Flutter is free)
+   - Your time is the investment, with strong potential returns
 
 **The Pygame modernization is a band-aid. Flutter is the cure.**
 
-If budget or timeline is constrained, Path 3 (Hybrid) allows you to stage the investment. But ultimately, true mobile success requires a mobile-native framework like Flutter.
+If time commitment or timeline is constrained, Path 3 (Hybrid) allows you to stage the investment. But ultimately, true mobile success requires a mobile-native framework like Flutter.
+
+---
+
+**📝 Note on Cost Framework:** The research documents originally included professional developer cost estimates ($75-100/hour rates for hiring scenarios). As a solo developer building yourself, your actual out-of-pocket costs are minimal ($0-124 for app store fees). This executive summary and supporting documents have been updated to focus on **time investment** and **return on time invested**, which are the metrics that matter for your decision.
 
 ---
 

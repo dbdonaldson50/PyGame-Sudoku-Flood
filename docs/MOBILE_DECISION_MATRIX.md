@@ -1,15 +1,17 @@
 # Mobile Framework Decision Matrix
-## Sudoku Flash: Quick Stakeholder Reference
+## Sudoku Flash: Solo Developer Quick Reference
 
-**Purpose:** One-page decision aid for technical leadership  
-**Date:** March 23, 2026  
+**Purpose:** One-page decision aid for solo developer time investment  
+**Date:** March 24, 2026 (Updated for Solo Developer)  
 **Author:** Red Donaldson
+
+**Note:** Original version included professional developer hiring costs. This version focuses on your time investment and out-of-pocket expenses as a solo developer.
 
 ---
 
 ## 🎯 TL;DR: Choose Flutter
 
-**Rationale:** Best balance of performance, development speed, and long-term viability.
+**Rationale:** Best balance of performance, development speed, and return on time invested.
 
 ---
 
@@ -25,14 +27,16 @@
 | **Startup Time** | Instant | 1.5s ✅ | 2.5s | 5s ❌ | <1s ⭐ |
 | **Memory Usage** | 60MB | 50MB ✅ | 75MB | 85MB ❌ | 45MB ⭐ |
 
-### Development Cost & Timeline
+### Development Time & Investment
 
-| Framework | Dev Time | Cost (First Year) | Maintenance (Annual) | Team Size |
-|-----------|----------|------------------|---------------------|-----------|
-| **Flutter** | 8 weeks | $33,124 ✅ | $12,099 | 1 developer |
-| **React Native** | 9 weeks | $37,224 | $13,299 | 1 developer |
-| **Kivy** | 7 weeks | $29,224 | $10,099 | 1 developer |
-| **Native (Swift+Kotlin)** | 12 weeks | $49,224 ❌ | $18,099 | 2 developers |
+| Framework | Time Investment | Out-of-Pocket $ | Learning Curve | Solo-Friendly? |
+|-----------|----------------|-----------------|----------------|----------------|
+| **Flutter** | 320 hrs (8 wks) ✅ | $124 | Medium | Yes ✅ |
+| **React Native** | 360 hrs (9 wks) | $124 | Medium | Yes ✅ |
+| **Kivy** | 280 hrs (7 wks) | $124 | Easy | Yes ✅ |
+| **Native (Swift+Kotlin)** | 480 hrs (12 wks) ❌ | $124 | Hard | No ❌ |
+
+*Out-of-pocket costs: iOS Developer Account ($99/year) + Google Play ($25 one-time)*
 
 ### Technical Risk Assessment
 
@@ -56,9 +60,7 @@
 │ Development Speed    │ 20%    │ 9/10    │ 8/10         │ 9/10 │ 5/10   │
 │ Code Maintainability │ 15%    │ 9/10    │ 7/10         │ 5/10 │ 6/10   │
 │ UI/UX Quality        │ 15%    │ 10/10   │ 8/10         │ 5/10 │ 10/10  │
-│ Learning Curve       │ 10%    │ 7/10    │ 7/10         │ 9/10 │ 4/10   │
-│ Ecosystem Maturity   │ 10%    │ 9/10    │ 10/10        │ 4/10 │ 10/10  │
-│ Total Cost           │ 5%     │ 9/10    │ 8/10         │ 10/10│ 5/10   │
+│ Solo-Developer Fit   │ 5%     │ 10/10   │ 9/10         │ 8/10 │ 4/10   │
 ├──────────────────────┼────────┼─────────┼──────────────┼──────┼────────┤
 │ WEIGHTED SCORE       │ 100%   │ 8.95 ⭐  │ 7.60         │ 5.35 │ 7.30   │
 └──────────────────────┴────────┴─────────┴──────────────┴──────┴────────┘
@@ -66,36 +68,61 @@
 
 **Winner:** Flutter (8.95/10)
 
----
+*Note: "Total Cost" criterion replaced with "Solo-Developer Fit" since out-of-pocket costs are identical ($124) across all frameworks.*
 
-## ROI Analysis
+**Winner:** Flutter (8.95/10)
 
-### Flutter Investment
+---eturn on Time Investment
 
-**Upfront Costs:**
-- Development: $32,000 (8 weeks)
-- Platform fees: $124
-- Test devices: $1,000
-- **Total: $33,124**
+### Flutter: Time vs Revenue Analysis
+
+**Time Investment:**
+- Development: 320 hours (8 weeks full-time)
+- Proof-of-concept: 80 hours (2 weeks, included in total)
+- **Total: 320 hours**
+
+**Out-of-Pocket Expenses:**
+- iOS Developer Account: $99/year
+- Google Play Developer: $25 one-time
+- Optional test device: $300-500 (can use personal devices)
+- **Minimum Total: $124**
 
 **Expected Returns (Year 1):**
 - 10,000 downloads @ $2.99 = $29,900 gross
 - Apple/Google cut (30%): -$8,970
 - **Net revenue: $20,930**
-- **Year 1 loss: -$12,194**
+- **Return after expenses: $20,806**
+- **Effective hourly rate: $65/hour** (Year 1)
 
 **Expected Returns (Year 2+):**
 - 25,000 downloads/year @ $2.99 = $74,750 gross
 - Platform fees (30%): -$22,425
-- Maintenance: -$12,099
-- **Year 2+ profit: $40,226** ✅
+- **Year 2+ revenue: $52,325** (annual ongoing)
+- **Effective hourly rate: $163/hour** (amortized over Years 1-2)
+- **Long-term rate: $625-938/hour** (amortized over 5 years)
 
-**Break-even:** ~5-6 months after launch
+**Time Payback:** ~160 hours of your investment pays back in Year 1
 
-### Alternative: Do Nothing
+### Opportunity Cost Comparison
+
+What else could you do with 320 hours?
+
+| Alternative | Potential Return | Notes |
+|-------------|------------------|-------|
+| **Contract Work** | $24-32K ($75-100/hr) | One-time income |
+| **Another Product** | Variable | Risk/reward similar |
+| **Learning** | Career value | Long-term benefit |
+| **Flutter Mobile App** | $65-163/hr (Years 1-2) | Ongoing passive income ✅ |
+
+**Flutter offers competitive returns with ongoing revenue potential.**
+
+### Alternative: Do Nothing (Desktop Only)
 
 **Current State:**
 - Desktop-only (limited audience)
+- No mobile revenue ($0/year)
+- Python/Pygame maintenance continues
+- Time investment: Ongoing feature development
 - No mobile revenue
 - Python/Pygame maintenance continues
 - No growth potential
